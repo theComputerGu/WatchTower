@@ -1,0 +1,127 @@
+.sidebar {
+  width: 270px;
+  height: 100vh;
+
+  background: linear-gradient(
+    180deg,
+    #0b1220 0%,
+    #0f172a 100%
+  );
+
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 20px 16px;
+  box-sizing: border-box;
+}
+
+.sidebar__logo {
+  font-size: 18px;
+  font-weight: 600;
+  color: #a855f7;
+  margin-bottom: 32px;
+}
+
+.sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sidebar__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 12px 14px;
+  border-radius: 10px;
+
+  color: #cbd5e1;
+  text-decoration: none;
+  font-size: 14px;
+
+  transition: background 0.2s, color 0.2s;
+}
+
+.sidebar__item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+.sidebar__item.active {
+  background: linear-gradient(
+    90deg,
+    rgba(168, 85, 247, 0.25),
+    rgba(168, 85, 247, 0.05)
+  );
+  color: #ffffff;
+}
+
+
+
+/* ===== Radar Loader ===== */
+
+.radar {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 24px auto;
+
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at center, rgba(56,189,248,0.15), transparent 70%),
+    linear-gradient(180deg, #020617, #020617);
+
+  border: 2px solid rgba(56,189,248,0.3);
+  overflow: hidden;
+}
+
+.radar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    repeating-radial-gradient(
+      circle,
+      rgba(56,189,248,0.15) 0px,
+      rgba(56,189,248,0.15) 1px,
+      transparent 1px,
+      transparent 12px
+    );
+}
+
+.radar__sweep {
+  position: absolute;
+  width: 50%;
+  height: 50%;
+  background: linear-gradient(
+    90deg,
+    rgba(56,189,248,0.6),
+    transparent
+  );
+  top: 50%;
+  left: 50%;
+  transform-origin: top left;
+  animation: radar-spin 2.5s linear infinite;
+}
+
+@keyframes radar-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.radar__dot {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #22c55e;
+  border-radius: 50%;
+  opacity: 0.8;
+}
+
+.dot-1 { top: 30%; left: 60%; }
+.dot-2 { top: 65%; left: 40%; }
+.dot-3 { top: 45%; left: 25%; }
