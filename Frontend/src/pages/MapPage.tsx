@@ -8,8 +8,10 @@ export default function MapPage() {
     <>
       <MapStatsBar />
       <MapFiltersBar />
+
       <div className="page">
         <MapView />
+
         <RightPanel title="Edit Area">
           <label>Area Name</label>
           <input placeholder="Central District" />

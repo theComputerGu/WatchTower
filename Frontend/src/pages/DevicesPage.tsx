@@ -5,11 +5,14 @@ export default function DevicesPage() {
   return (
     <div className="page">
       <MapView />
+
       <RightPanel title="Edit Camera / Radar">
+        <label>Type</label>
         <select>
           <option>Camera</option>
           <option>Radar</option>
         </select>
+
         <button className="primary">Save</button>
       </RightPanel>
     </div>
