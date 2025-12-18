@@ -15,8 +15,6 @@ export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   [ROLES.USER]: [
     PERMISSIONS.MAP,
-    PERMISSIONS.PLACES,
-    PERMISSIONS.DEVICES,
   ],
 
   [ROLES.AREA_ADMIN]: [

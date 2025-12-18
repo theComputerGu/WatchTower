@@ -9,33 +9,27 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// =======================
-// Services
-// =======================
 
-// Controllers
+
 builder.Services.AddControllers();
 
-// 🔹 Swagger services
+//swagger:
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// DbContext - SQL Server Express
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("Default")));
+//dbcontext:
+builder.Services.AddDbContext<AppDbContext>(options =>options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
-// JWT config
-builder.Services.Configure<JwtSettings>(
-    builder.Configuration.GetSection("Jwt"));
+//JWT:
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 
-var jwtSettings = builder.Configuration
-    .GetSection("Jwt")
-    .Get<JwtSettings>()!;
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
+var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()!;
+
+
+//function that checking the key:
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+{
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = false,
@@ -47,11 +41,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// Services
+
+//interfaces:
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
-// CORS - Vite React
+//conection to front:
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowVite", policy =>
@@ -63,13 +58,12 @@ builder.Services.AddCors(options =>
     });
 });
 
+
+//app building:
 var app = builder.Build();
 
-// =======================
-// Middleware
-// =======================
 
-// 🔹 Swagger middleware (רק בפיתוח)
+//swagger:
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
