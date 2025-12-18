@@ -32,3 +32,8 @@ export async function deleteArea(areaId: number) {
 export async function assignAreaAdmin(areaId: number, userId: string) {
   await api.put(`/areas/${areaId}/assign-admin/${userId}`);
 }
+
+export async function getUnassignedAreas(): Promise<Area[]> {
+  const res = await api.get<Area[]>("/areas/unassigned");
+  return res.data;
+}

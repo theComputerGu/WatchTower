@@ -338,3 +338,15 @@ button.primary {
   flex-direction: column;
   gap: 12px;
 }
+
+
+
+.actions-cell {
+  display: flex;
+  justify-content: flex-end;   /* ⬅️ הצמדה לימין */
+  align-items: center;
+  gap: 12px;                   /* ⬅️ רווח בין הכפתורים */
+  padding-right: 16px;         /* ⬅️ רווח מהקצה הימני */
+  white-space: nowrap;         /* ⬅️ שלא יישבר שורה */
+}
+

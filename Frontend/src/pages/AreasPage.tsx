@@ -1,3 +1,4 @@
+// src/pages/AreasPage.tsx
 import { useEffect, useState } from "react";
 import type { Area } from "../models/Area";
 import {
@@ -80,7 +81,7 @@ export default function AreasPage() {
         />
       )}
 
-      {/* TABLE – מוצג רק כשלא עורכים */}
+      {/* TABLE */}
       {!creating && !editingArea && (
         <div className="areas-table-wrapper">
           <table>
@@ -89,23 +90,20 @@ export default function AreasPage() {
                 <th style={{ width: "22%" }}>Name</th>
                 <th style={{ width: "38%" }}>Description</th>
                 <th style={{ width: "14%" }}>Area Admin</th>
-                <th
-                  style={{
-                    width: "26%",
-                    textAlign: "right",
-                    paddingRight: "16px",
-                  }}
-                >
+                <th style={{ width: "26%", textAlign: "right" }}>
                   Actions
                 </th>
               </tr>
             </thead>
+
             <tbody>
               {areas.map((area) => (
                 <tr key={area.id}>
                   <td>{area.name}</td>
                   <td>{area.description}</td>
                   <td>{area.areaAdminName ?? "-"}</td>
+
+                  {/* ⬅️ כאן התיקון האמיתי */}
                   <td className="actions-cell">
                     <button
                       className="row-btn edit"

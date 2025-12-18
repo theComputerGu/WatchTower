@@ -93,5 +93,25 @@ namespace Backend.Services
             area.AreaAdminUserId = user.Id;
             await _context.SaveChangesAsync();
         }
+
+        //get areas withought area admin
+        public async Task<List<AreaResponse>> GetUnassignedAsync()
+        {
+            var areas = await _context.Areas
+                .Where(a => a.AreaAdminUserId == null)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return areas.Select(a => new AreaResponse
+            {
+                Id = a.Id,
+                Name = a.Name,
+                Description = a.Description,
+                PolygonGeoJson = a.PolygonGeoJson,
+                AreaAdminUserId = null,
+                AreaAdminName = null
+            }).ToList();
+        }
+
     }
 }

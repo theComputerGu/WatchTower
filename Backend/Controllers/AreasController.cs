@@ -55,5 +55,12 @@ namespace Backend.Controllers
             await _areaService.AssignAdminAsync(id, userId);
             return NoContent();
         }
+
+        // get areas without admin
+        [HttpGet("unassigned")]
+        public async Task<ActionResult<List<AreaResponse>>> GetUnassigned()
+        {
+            return await _areaService.GetUnassignedAsync();
+        }
     }
 }

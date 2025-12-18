@@ -9,7 +9,7 @@ export async function getUsers(): Promise<User[]> {
 
 export async function updateUser(
   userId: string,
-  data: { role: string; areaId?: number }
+  data: { role: string; areaId?: number | null }
 ) {
   const payload: any = {
     role: data.role,
