@@ -4,6 +4,8 @@ import areasReducer from "./areas/areasSlice";
 import devicesReducer from "./devices/devicesSlice";
 import mapReducer from "./map/mapSlice";
 import usersReducer from "./users/usersSlice";
+import "leaflet/dist/leaflet.css";
+import "leaflet-draw/dist/leaflet.draw.css";
 
 export const store = configureStore({
   reducer: {

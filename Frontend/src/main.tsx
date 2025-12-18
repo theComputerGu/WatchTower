@@ -5,6 +5,8 @@ import App from "./App";
 import { store } from "./store";
 import "./assets/styles/global.css";
 import "./assets/styles/sidebar.css";
+import "leaflet/dist/leaflet.css";
+import "leaflet-draw/dist/leaflet.draw.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
