@@ -12,6 +12,7 @@ import DevicesPage from "../pages/DevicesPage";
 import UsersPage from "../pages/UsersPage";
 
 export default function AppRouter() {
+
   return (
     <Routes>
       {/* Public */}

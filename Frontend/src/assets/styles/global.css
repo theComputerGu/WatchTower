@@ -285,3 +285,68 @@ button.primary {
   color: #60a5fa;
   text-decoration: none;
 }
+
+
+.users-page {
+  display: flex;
+  gap: 24px;
+  height: 100%;
+}
+
+.users-table {
+  flex: 1;
+  background: rgba(255,255,255,0.03);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.table-header,
+.table-row {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1fr 1.5fr;
+  padding: 8px 12px;
+}
+
+.table-header {
+  font-weight: bold;
+  opacity: 0.8;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.table-row {
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.table-row:hover {
+  background: rgba(255,255,255,0.05);
+}
+
+.table-row.active {
+  background: rgba(120,80,255,0.25);
+}
+
+.right-panel {
+  width: 320px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+
+
+.actions-cell {
+  display: flex;
+  justify-content: flex-end;   /* ⬅️ הצמדה לימין */
+  align-items: center;
+  gap: 12px;                   /* ⬅️ רווח בין הכפתורים */
+  padding-right: 16px;         /* ⬅️ רווח מהקצה הימני */
+  white-space: nowrap;         /* ⬅️ שלא יישבר שורה */
+}
+

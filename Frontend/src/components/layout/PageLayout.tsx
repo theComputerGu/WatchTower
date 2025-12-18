@@ -3,6 +3,7 @@ import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 
 export default function PageLayout() {
+
   return (
     <div className="layout">
       <Sidebar />

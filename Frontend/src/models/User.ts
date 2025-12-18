@@ -5,5 +5,7 @@ export interface User {
   email: string;
   username: string;
   role: Role;
-  areas?: string[];
+  areaId?: number;
+  areaName?: string;
+  isActive: boolean;
 }
