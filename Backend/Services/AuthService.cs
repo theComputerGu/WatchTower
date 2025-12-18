@@ -119,15 +119,12 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponse> SignUpAsync(SignUpRequest request)
     {
-        if (string.IsNullOrWhiteSpace(request.Email) ||
-            string.IsNullOrWhiteSpace(request.Password))
-            throw new ArgumentException("Email and password are required");
-
-        if (request.Password.Length < 6)
-            throw new ArgumentException("Password must be at least 6 characters");
 
         if (await _db.Users.AnyAsync(u => u.Email == request.Email))
             throw new ArgumentException("Email already exists");
+
+        if (await _db.Users.AnyAsync(u => u.Username == request.Username))
+            throw new ArgumentException("Username already exists");
 
         var user = new User
         {
@@ -160,12 +157,9 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request)
     {
-        if (string.IsNullOrWhiteSpace(request.Email) ||
-            string.IsNullOrWhiteSpace(request.Password))
-            throw new ArgumentException("Email and password are required");
-
+    
         var user = await _db.Users
-            .FirstOrDefaultAsync(u => u.Email == request.Email && u.IsActive);
+            .FirstOrDefaultAsync(u => u.Email == request.Email);
 
         if (user == null)
             throw new ArgumentException("Invalid credentials");
