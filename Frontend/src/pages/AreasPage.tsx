@@ -1,4 +1,3 @@
-// src/pages/AreasPage.tsx
 import { useEffect, useState } from "react";
 import type { Area } from "../models/Area";
 import {
@@ -57,7 +56,7 @@ export default function AreasPage() {
 
   return (
     <div className="areas-page">
-      {/* HEADER */}
+  
       <div className="areas-header centered">
         {!creating && !editingArea && (
           <button
@@ -69,7 +68,7 @@ export default function AreasPage() {
         )}
       </div>
 
-      {/* CREATE / EDIT */}
+
       {(creating || editingArea) && (
         <AreaForm
           initial={editingArea}
@@ -81,48 +80,33 @@ export default function AreasPage() {
         />
       )}
 
-      {/* TABLE */}
+  
       {!creating && !editingArea && (
-        <div className="areas-table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th style={{ width: "22%" }}>Name</th>
-                <th style={{ width: "38%" }}>Description</th>
-                <th style={{ width: "14%" }}>Area Admin</th>
-                <th style={{ width: "26%", textAlign: "right" }}>
-                  Actions
-                </th>
-              </tr>
-            </thead>
+        <div className="areas-list">
+  <div className="areas-row header">
+    <div>Name</div>
+    <div>Description</div>
+    <div>Area Admin</div>
+  </div>
 
-            <tbody>
-              {areas.map((area) => (
-                <tr key={area.id}>
-                  <td>{area.name}</td>
-                  <td>{area.description}</td>
-                  <td>{area.areaAdminName ?? "-"}</td>
+  {areas.map(area => (
+    <div className="areas-row" key={area.id}>
+      <div>{area.name}</div>
+      <div className="muted">{area.description}</div>
+      <div>{area.areaAdminName ?? "-"}</div>
 
-                  {/* ⬅️ כאן התיקון האמיתי */}
-                  <td className="actions-cell">
-                    <button
-                      className="row-btn edit"
-                      onClick={() => setEditingArea(area)}
-                    >
-                      ✏️ Edit
-                    </button>
-                    <button
-                      className="row-btn delete"
-                      onClick={() => handleDelete(area.id)}
-                    >
-                      🗑 Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <div className="actions-cell">
+        <button className="row-btn edit" onClick={() => setEditingArea(area)}>
+          ✏️ Edit
+        </button>
+        <button className="row-btn delete" onClick={() => handleDelete(area.id)}>
+          🗑 Delete
+        </button>
+      </div>
+    </div>
+  ))}
+</div>
+
       )}
     </div>
   );

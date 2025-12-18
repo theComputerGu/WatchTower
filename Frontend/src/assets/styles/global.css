@@ -350,3 +350,48 @@ button.primary {
   white-space: nowrap;         /* ⬅️ שלא יישבר שורה */
 }
 
+td.actions-cell {
+  text-align: right;
+}
+
+
+th.actions-header {
+  text-align: right;
+  padding-right: 16px;
+}
+
+.actions-inner {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+
+.areas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.areas-row {
+  display: grid;
+  grid-template-columns: 22% 38% 14% 26%;
+  align-items: center;
+
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.03);
+}
+
+.areas-row.header {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: transparent;
+}
+
+.actions-cell {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
