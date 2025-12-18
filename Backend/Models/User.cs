@@ -17,4 +17,6 @@ public class User
     public DateTime CreatedAt { get; set; }
 
     public bool IsActive { get; set; }
+
+    public ICollection<Area> ManagedAreas { get; set; }= new List<Area>();
 }

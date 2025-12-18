@@ -1,13 +1,17 @@
+import type { ReactNode } from "react";
+
 type Props = {
   title: string;
-  children: React.ReactNode;
+  children: ReactNode;
 };
 
 export default function RightPanel({ title, children }: Props) {
   return (
-    <aside className="right-panel">
+    <div className="right-panel">
       <h3>{title}</h3>
-      {children}
-    </aside>
+      <div className="right-panel-content">
+        {children}
+      </div>
+    </div>
   );
 }

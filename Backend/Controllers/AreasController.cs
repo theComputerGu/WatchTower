@@ -1,0 +1,59 @@
+using Backend.DTOs.Areas;
+using Backend.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Backend.Controllers
+{
+    [ApiController]
+    [Route("api/areas")]
+    [Authorize(Roles = "GLOBAL_ADMIN")]
+    public class AreasController : ControllerBase
+    {
+        private readonly IAreaService _areaService;
+
+        public AreasController(IAreaService areaService)
+        {
+            _areaService = areaService;
+        }
+
+        //get all areas
+        [HttpGet]
+        public async Task<ActionResult<List<AreaResponse>>> GetAll()
+        {
+            return await _areaService.GetAllAsync();
+        }
+
+        //create area
+        [HttpPost]
+        public async Task<IActionResult> Create(CreateAreaRequest request)
+        {
+            var id = await _areaService.CreateAsync(request);
+            return CreatedAtAction(nameof(GetAll), new { id }, null);
+        }
+
+        //edit area
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, CreateAreaRequest request)
+        {
+            await _areaService.UpdateAsync(id, request);
+            return NoContent();
+        }
+
+        //delete area
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            await _areaService.DeleteAsync(id);
+            return NoContent();
+        }
+
+        //relate area to admin
+        [HttpPut("{id}/assign-admin/{userId}")]
+        public async Task<IActionResult> AssignAdmin(int id, Guid userId)
+        {
+            await _areaService.AssignAdminAsync(id, userId);
+            return NoContent();
+        }
+    }
+}

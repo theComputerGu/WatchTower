@@ -3,10 +3,12 @@ import authReducer from "./auth/authSlice";
 import areasReducer from "./areas/areasSlice";
 import devicesReducer from "./devices/devicesSlice";
 import mapReducer from "./map/mapSlice";
+import usersReducer from "./users/usersSlice";
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
+    users: usersReducer,
     areas: areasReducer,
     devices: devicesReducer,
     map: mapReducer,
