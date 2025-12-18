@@ -55,8 +55,8 @@ namespace Backend.Services
         public async Task UpdateAsync(int areaId, CreateAreaRequest request)
         {
             var area = await _context.Areas.FindAsync(areaId);
-            if (area == null)
-                throw new Exception("Area not found");
+            // if (area == null)
+            //     throw new Exception("Area not found");
 
             area.Name = request.Name;
             area.Description = request.Description;
@@ -69,8 +69,8 @@ namespace Backend.Services
         public async Task DeleteAsync(int areaId)
         {
             var area = await _context.Areas.FindAsync(areaId);
-            if (area == null)
-                throw new Exception("Area not found");
+            // if (area == null)
+            //     throw new Exception("Area not found");
 
             _context.Areas.Remove(area);
             await _context.SaveChangesAsync();
@@ -80,21 +80,21 @@ namespace Backend.Services
         public async Task AssignAdminAsync(int areaId, Guid userId)
         {
             var area = await _context.Areas.FindAsync(areaId);
-            if (area == null)
-                throw new Exception("Area not found");
+            // if (area == null)
+            //     throw new Exception("Area not found");
 
             var user = await _context.Users.FindAsync(userId);
-            if (user == null)
-                throw new Exception("User not found");
+            // if (user == null)
+            //     throw new Exception("User not found");
 
-            if (user.Role != UserRole.AREA_ADMIN)
-                throw new Exception("User is not AREA_ADMIN");
+            // if (user.Role != UserRole.AREA_ADMIN)
+            //     throw new Exception("User is not AREA_ADMIN");
 
             area.AreaAdminUserId = user.Id;
             await _context.SaveChangesAsync();
         }
 
-        //get areas withought area admin
+        //get areas that not relate to the current admin
         public async Task<List<AreaResponse>> GetUnassignedAsync()
         {
             var areas = await _context.Areas

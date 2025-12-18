@@ -42,7 +42,7 @@ namespace Backend.Services
         }
 
 
-        //update status of user to admin area
+        //update status of user to admin area or to regular user
         public async Task UpdateUserAsync(Guid userId, UpdateUserRequest request)
         {
             var user = await _context.Users
@@ -87,8 +87,8 @@ namespace Backend.Services
                 if (area == null)
                     throw new Exception("Area not found");
 
-                if (area.AreaAdminUserId != null && area.AreaAdminUserId != user.Id)
-                    throw new Exception("Area already has an admin");
+                // if (area.AreaAdminUserId != null && area.AreaAdminUserId != user.Id)
+                //     throw new Exception("Area already has an admin");
                 DetachAllManagedAreas();
 
                 user.ManagedAreas.Add(area);

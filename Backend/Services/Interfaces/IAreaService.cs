@@ -9,7 +9,6 @@ namespace Backend.Services.Interfaces
         Task UpdateAsync(int areaId, CreateAreaRequest request);
         Task DeleteAsync(int areaId);
         Task AssignAdminAsync(int areaId, Guid userId);
-
         Task<List<AreaResponse>> GetUnassignedAsync();
     }
 }
