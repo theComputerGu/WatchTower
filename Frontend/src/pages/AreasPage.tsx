@@ -56,56 +56,76 @@ export default function AreasPage() {
 
   return (
     <div className="areas-page">
-      <h1>Areas</h1>
+      {/* HEADER */}
+      <div className="areas-header centered">
+        {!creating && !editingArea && (
+          <button
+            className="add-area-btn"
+            onClick={() => setCreating(true)}
+          >
+            + Add Area
+          </button>
+        )}
+      </div>
 
-      {!creating && !editingArea && (
-        <button onClick={() => setCreating(true)}>
-          Create Area
-        </button>
-      )}
-
-      {creating && (
-        <AreaForm
-          onSave={handleCreate}
-          onCancel={() => setCreating(false)}
-        />
-      )}
-
-      {editingArea && (
+      {/* CREATE / EDIT */}
+      {(creating || editingArea) && (
         <AreaForm
           initial={editingArea}
-          onSave={handleUpdate}
-          onCancel={() => setEditingArea(null)}
+          onSave={editingArea ? handleUpdate : handleCreate}
+          onCancel={() => {
+            setCreating(false);
+            setEditingArea(null);
+          }}
         />
       )}
 
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Description</th>
-            <th>Area Admin</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {areas.map(area => (
-            <tr key={area.id}>
-              <td>{area.name}</td>
-              <td>{area.description}</td>
-              <td>{area.areaAdminName ?? "-"}</td>
-              <td>
-                <button onClick={() => setEditingArea(area)}>
-                  Edit
-                </button>
-                <button onClick={() => handleDelete(area.id)}>
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* TABLE – מוצג רק כשלא עורכים */}
+      {!creating && !editingArea && (
+        <div className="areas-table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th style={{ width: "22%" }}>Name</th>
+                <th style={{ width: "38%" }}>Description</th>
+                <th style={{ width: "14%" }}>Area Admin</th>
+                <th
+                  style={{
+                    width: "26%",
+                    textAlign: "right",
+                    paddingRight: "16px",
+                  }}
+                >
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {areas.map((area) => (
+                <tr key={area.id}>
+                  <td>{area.name}</td>
+                  <td>{area.description}</td>
+                  <td>{area.areaAdminName ?? "-"}</td>
+                  <td className="actions-cell">
+                    <button
+                      className="row-btn edit"
+                      onClick={() => setEditingArea(area)}
+                    >
+                      ✏️ Edit
+                    </button>
+                    <button
+                      className="row-btn delete"
+                      onClick={() => handleDelete(area.id)}
+                    >
+                      🗑 Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

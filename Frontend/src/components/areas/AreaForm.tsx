@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Area } from "../../models/Area";
 import AreaMapPicker from "./AreaMapPicker";
+import "./areas.css";
 
 type Props = {
   initial?: Area | null;
@@ -15,13 +16,10 @@ type Props = {
 export default function AreaForm({ initial, onSave, onCancel }: Props) {
   const [name, setName] = useState(initial?.name ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
-  const [polygon, setPolygon] = useState(
-    initial?.polygonGeoJson ?? ""
-  );
+  const [polygon, setPolygon] = useState(initial?.polygonGeoJson ?? "");
   const [saving, setSaving] = useState(false);
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSave() {
     setSaving(true);
     await onSave({
       name,
@@ -32,45 +30,49 @@ export default function AreaForm({ initial, onSave, onCancel }: Props) {
   }
 
   return (
-    <form onSubmit={submit} className="area-form">
-      <h3>{initial ? "Edit Area" : "Create Area"}</h3>
+    <div className="area-editor-layout">
+      {/* MAP */}
+      <div className="area-map-column">
+        <AreaMapPicker
+          value={polygon}
+          onChange={setPolygon}
+          tall
+        />
+      </div>
 
-      <label>
-        Name
+      {/* SIDE PANEL */}
+      <div className="area-side-panel">
+        <h2>{initial ? "Edit Area" : "Create Area"}</h2>
+        <p className="subtitle">
+          Draw the area on the map and define its details
+        </p>
+
+        <label>Name</label>
         <input
           value={name}
           onChange={e => setName(e.target.value)}
           required
         />
-      </label>
 
-      <label>
-        Description
-        <input
+        <label>Description</label>
+        <textarea
           value={description ?? ""}
           onChange={e => setDescription(e.target.value)}
+          rows={3}
         />
-      </label>
 
-      <label>
-        Polygon (GeoJSON)
-        <label>
-            Area Polygon
-            <AreaMapPicker
-                value={polygon}
-                onChange={setPolygon}
-            />
-        </label>
-      </label>
-
-      <div className="actions">
-        <button type="submit" disabled={saving}>
-          Save
-        </button>
-        <button type="button" onClick={onCancel}>
-          Cancel
-        </button>
+        <div className="actions">
+          <button
+            disabled={!polygon || saving}
+            onClick={handleSave}
+          >
+            Save Area
+          </button>
+          <button onClick={onCancel}>
+            Cancel
+          </button>
+        </div>
       </div>
-    </form>
+    </div>
   );
 }
