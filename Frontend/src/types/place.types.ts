@@ -1,6 +1,6 @@
-export type PlaceType = "Camera" | "Radar";
+export type PlaceType = "None" | "Camera" | "Radar";
 
-export interface PlaceResponse {
+export type PlaceResponse = {
   id: number;
   latitude: number;
   longitude: number;
@@ -8,7 +8,8 @@ export interface PlaceResponse {
   areaId: number;
   cameraId?: number | null;
   radarId?: number | null;
-}
+};
+
 
 export interface CreatePlaceRequest {
   latitude: number;

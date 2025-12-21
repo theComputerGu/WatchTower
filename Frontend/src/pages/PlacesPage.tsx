@@ -18,25 +18,38 @@ import PlaceTypeSelector from "../components/places/PlaceTypeSelector";
 type PendingPoint = { lat: number; lng: number } | null;
 
 export default function PlacesPage() {
-  // 🔹 user מגיע מ־Redux
+  // ============================
+  // Auth
+  // ============================
   const user = useSelector((state: RootState) => state.auth.user);
 
+  // ============================
+  // Data
+  // ============================
   const [areas, setAreas] = useState<Area[]>([]);
   const [places, setPlaces] = useState<PlaceResponse[]>([]);
-  const [selectedType, setSelectedType] = useState<PlaceType>("Camera");
+
+  // 👇 חשוב: יכול להיות null (נקודה ריקה)
+  const [selectedType, setSelectedType] = useState<PlaceType | null>(null);
+
   const [loading, setLoading] = useState(true);
 
+  // ============================
+  // Placement state
+  // ============================
   const [isPlacing, setIsPlacing] = useState(false);
   const [pendingPoint, setPendingPoint] = useState<PendingPoint>(null);
   const [submitting, setSubmitting] = useState(false);
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
 
+  // ============================
+  // Initial load
+  // ============================
   useEffect(() => {
     async function load() {
       if (!user) return;
 
       try {
-        // 🔥 הבחירה לפי role
         const areasPromise =
           user.role === "AREA_ADMIN" ? getMyAreas() : getAreas();
 
@@ -57,12 +70,18 @@ export default function PlacesPage() {
     load();
   }, [user]);
 
+  // ============================
+  // Map click
+  // ============================
   function handleMapClick(lat: number, lng: number) {
     if (!isPlacing) return;
     setPendingPoint({ lat, lng });
     setStatusMsg(null);
   }
 
+  // ============================
+  // Create place
+  // ============================
   async function handleConfirmCreate() {
     if (!pendingPoint) return;
 
@@ -70,11 +89,17 @@ export default function PlacesPage() {
     setStatusMsg(null);
 
     try {
-      const newPlace = await createPlace({
+      // 👇 payload חכם – לא שולחים type אם אין
+      const payload: any = {
         latitude: pendingPoint.lat,
         longitude: pendingPoint.lng,
-        type: selectedType,
-      });
+      };
+
+      if (selectedType) {
+        payload.type = selectedType;
+      }
+
+      const newPlace = await createPlace(payload);
 
       setPlaces((prev) => [...prev, newPlace]);
       setPendingPoint(null);
@@ -89,6 +114,9 @@ export default function PlacesPage() {
     }
   }
 
+  // ============================
+  // Cancel
+  // ============================
   function handleCancel() {
     setPendingPoint(null);
     setIsPlacing(false);
@@ -96,7 +124,10 @@ export default function PlacesPage() {
   }
 
   if (loading) return <div>Loading...</div>;
-console.log("AREAS:", areas);
+
+  // ============================
+  // Render
+  // ============================
   return (
     <div className="page">
       <MapView onMapClick={handleMapClick}>

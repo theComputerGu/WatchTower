@@ -64,4 +64,23 @@ Console.WriteLine("======================");
     var places = await _placeService.GetPlacesForUserAsync(user);
     return Ok(places);
 }
+
+[HttpPatch("{id}/type")]
+[Authorize(Roles = "GLOBAL_ADMIN,AREA_ADMIN")]
+public async Task<IActionResult> UpdatePlaceType(
+    int id,
+    [FromBody] UpdatePlaceTypeRequest request)
+{
+    var user = HttpContext.Items["User"] as User;
+    if (user == null) return Unauthorized();
+
+    await _placeService.UpdatePlaceTypeAsync(
+        id,
+        request.Type,
+        user);
+
+    return NoContent();
+}
+
+
 }

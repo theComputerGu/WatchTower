@@ -12,5 +12,7 @@ public class CreatePlaceRequest
     public double Longitude { get; set; }
 
     [Required]
-    public PlaceType Type { get; set; }
+    public int AreaId { get; set; }
+
+    public PlaceType? Type { get; set; }
 }

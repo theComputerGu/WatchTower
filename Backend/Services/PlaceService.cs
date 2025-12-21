@@ -23,86 +23,101 @@ public class PlaceService : IPlaceService
     // CREATE PLACE
     // =====================================================
     public async Task<PlaceResponse> CreatePlaceAsync(
-        CreatePlaceRequest request,
-        User currentUser)
+    CreatePlaceRequest request,
+    User currentUser)
+{
+    Area matchedArea;
+
+    // =============================
+    // 1. Resolve Area by role
+    // =============================
+    if (currentUser.Role == UserRole.GLOBAL_ADMIN)
+{
+    var areas = await _db.Areas
+        .AsNoTracking()
+        .Where(a => !string.IsNullOrWhiteSpace(a.PolygonGeoJson))
+        .ToListAsync(); // ⬅️ יוצאים מה-SQL
+
+    matchedArea = areas.FirstOrDefault(area =>
+        IsPointInsidePolygon(
+            request.Latitude,
+            request.Longitude,
+            area.PolygonGeoJson));
+
+    if (matchedArea == null)
+        throw new InvalidOperationException(
+            "Place is not inside any area");
+}
+
+    else
     {
-        Area? matchedArea = null;
+        matchedArea = currentUser.ManagedAreas.Single();
 
-        Console.WriteLine("===== CREATE PLACE DEBUG =====");
-        Console.WriteLine($"User: {currentUser.Email} ({currentUser.Role})");
-        Console.WriteLine($"Point: lat={request.Latitude}, lng={request.Longitude}");
-
-        if (currentUser.Role == UserRole.GLOBAL_ADMIN)
+        if (!IsPointInsidePolygon(
+                request.Latitude,
+                request.Longitude,
+                matchedArea.PolygonGeoJson))
         {
-            var areas = await _db.Areas.AsNoTracking().ToListAsync();
-
-            foreach (var area in areas)
-            {
-                if (string.IsNullOrWhiteSpace(area.PolygonGeoJson))
-                    continue;
-
-                bool inside = IsPointInsidePolygon(
-                    request.Latitude,
-                    request.Longitude,
-                    area.PolygonGeoJson
-                );
-
-                Console.WriteLine($"Checking area {area.Id} → inside={inside}");
-
-                if (inside)
-                {
-                    matchedArea = area;
-                    break;
-                }
-            }
-
-            if (matchedArea == null)
-                throw new InvalidOperationException(
-                    "Place is not inside any area – please choose another location");
+            throw new UnauthorizedAccessException(
+                "Place is not inside your area");
         }
-        else
-        {
-            var area = currentUser.ManagedAreas.Single();
-
-            if (!IsPointInsidePolygon(
-                    request.Latitude,
-                    request.Longitude,
-                    area.PolygonGeoJson))
-            {
-                throw new UnauthorizedAccessException(
-                    "Place is not inside your area");
-            }
-
-            matchedArea = area;
-        }
-
-        var place = new Place
-        {
-            AreaId = matchedArea!.Id,
-            Latitude = request.Latitude,
-            Longitude = request.Longitude,
-            Type = request.Type
-        };
-
-        _db.Places.Add(place);
-        await _db.SaveChangesAsync();
-
-        if (request.Type == PlaceType.Camera)
-            _db.Cameras.Add(new Camera { PlaceId = place.Id });
-        else
-            _db.Radars.Add(new Radar { PlaceId = place.Id });
-
-        await _db.SaveChangesAsync();
-
-        return new PlaceResponse
-        {
-            Id = place.Id,
-            Latitude = place.Latitude,
-            Longitude = place.Longitude,
-            Type = place.Type,
-            AreaId = place.AreaId
-        };
     }
+
+    // =============================
+    // 2. Create Place (3 states)
+    // =============================
+    var resolvedType = request.Type ?? PlaceType.None;
+
+    var place = new Place
+    {
+        Latitude = request.Latitude,
+        Longitude = request.Longitude,
+        AreaId = matchedArea.Id,
+        Type = resolvedType
+    };
+
+    _db.Places.Add(place);
+    await _db.SaveChangesAsync();
+
+    // =============================
+    // 3. Create extension entity (if needed)
+    // =============================
+    switch (resolvedType)
+    {
+        case PlaceType.Camera:
+            _db.Cameras.Add(new Camera
+            {
+                PlaceId = place.Id
+            });
+            break;
+
+        case PlaceType.Radar:
+            _db.Radars.Add(new Radar
+            {
+                PlaceId = place.Id
+            });
+            break;
+
+        case PlaceType.None:
+        default:
+            // נקודה ריקה – לא יוצרים כלום
+            break;
+    }
+
+    await _db.SaveChangesAsync();
+
+    // =============================
+    // 4. Response
+    // =============================
+    return new PlaceResponse
+    {
+        Id = place.Id,
+        Latitude = place.Latitude,
+        Longitude = place.Longitude,
+        Type = place.Type,
+        AreaId = place.AreaId
+    };
+}
 
     // =====================================================
     // GET PLACES FOR USER
@@ -174,4 +189,46 @@ public class PlaceService : IPlaceService
             return false;
         }
     }
+
+
+    public async Task UpdatePlaceTypeAsync(
+    int placeId,
+    PlaceType newType,
+    User currentUser)
+{
+    var place = await _db.Places
+        .Include(p => p.Camera)
+        .Include(p => p.Radar)
+        .FirstOrDefaultAsync(p => p.Id == placeId);
+
+    if (place == null)
+        throw new KeyNotFoundException("Place not found");
+
+    // הרשאות – חייב להיות באיזור שלו
+    if (currentUser.Role != UserRole.GLOBAL_ADMIN)
+    {
+        var areaId = currentUser.ManagedAreas.Single().Id;
+        if (place.AreaId != areaId)
+            throw new UnauthorizedAccessException();
+    }
+
+    // ניקוי מצב קודם
+    if (place.Camera != null)
+        _db.Cameras.Remove(place.Camera);
+
+    if (place.Radar != null)
+        _db.Radars.Remove(place.Radar);
+
+    // עדכון type
+    place.Type = newType;
+
+    // יצירת הרחבה חדשה
+    if (newType == PlaceType.Camera)
+        _db.Cameras.Add(new Camera { PlaceId = place.Id });
+    else if (newType == PlaceType.Radar)
+        _db.Radars.Add(new Radar { PlaceId = place.Id });
+
+    await _db.SaveChangesAsync();
+}
+
 }
