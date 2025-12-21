@@ -83,4 +83,17 @@ public async Task<IActionResult> UpdatePlaceType(
 }
 
 
+[HttpDelete("{placeId}")]
+[Authorize(Roles = "GLOBAL_ADMIN,AREA_ADMIN")]
+public async Task<IActionResult> DeletePlace(int placeId)
+{
+    var user = HttpContext.Items["User"] as User;
+    if (user == null) return Unauthorized();
+
+    await _placeService.DeletePlaceAsync(placeId, user);
+    return NoContent();
+}
+
+
+
 }

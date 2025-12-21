@@ -231,4 +231,49 @@ public class PlaceService : IPlaceService
     await _db.SaveChangesAsync();
 }
 
+
+// =====================================================
+// DELETE PLACE
+// =====================================================
+public async Task DeletePlaceAsync(
+    int placeId,
+    User currentUser)
+{
+    var place = await _db.Places
+        .Include(p => p.Camera)
+        .Include(p => p.Radar)
+        .FirstOrDefaultAsync(p => p.Id == placeId);
+
+    if (place == null)
+        throw new KeyNotFoundException("Place not found");
+
+    // =============================
+    // Authorization
+    // =============================
+    if (currentUser.Role != UserRole.GLOBAL_ADMIN)
+    {
+        var areaId = currentUser.ManagedAreas.Single().Id;
+        if (place.AreaId != areaId)
+            throw new UnauthorizedAccessException(
+                "You are not allowed to delete this place");
+    }
+
+    // =============================
+    // Cleanup children
+    // =============================
+    if (place.Camera != null)
+        _db.Cameras.Remove(place.Camera);
+
+    if (place.Radar != null)
+        _db.Radars.Remove(place.Radar);
+
+    // =============================
+    // Delete place
+    // =============================
+    _db.Places.Remove(place);
+
+    await _db.SaveChangesAsync();
+}
+
+
 }

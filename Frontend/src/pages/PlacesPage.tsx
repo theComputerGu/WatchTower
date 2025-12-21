@@ -12,6 +12,7 @@ import {
   getPlaces,
   createPlace,
   updatePlaceType,
+  deletePlace,
 } from "../services/place.service";
 
 import type { Area } from "../models/Area";
@@ -132,7 +133,21 @@ export default function PlacesPage() {
       alert("Failed to update place type");
     }
   }
+  // ============================
+// DELETE
+// ============================
+async function handleDeletePlace(placeId: number) {
+  try {
+    await deletePlace(placeId);
 
+    setPlaces((prev) =>
+      prev.filter((p) => p.id !== placeId)
+    );
+  } catch (err) {
+    console.error("Failed to delete place", err);
+    alert("Failed to delete place");
+  }
+}
   // ============================
   // Cancel
   // ============================
@@ -152,10 +167,12 @@ export default function PlacesPage() {
       <MapView onMapClick={handleMapClick}>
         <PolygonLayer areas={areas} interactive={!isPlacing} />
         <DevicesLayer
-          places={places}
-          pendingPoint={pendingPoint}
-          onEditType={handleEditPlaceType}
-        />
+  places={places}
+  pendingPoint={pendingPoint}
+  onEditType={handleEditPlaceType}
+  onDelete={handleDeletePlace}
+/>
+
       </MapView>
 
       <RightPanel title="Add Place">

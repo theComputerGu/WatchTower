@@ -19,5 +19,13 @@ public interface IPlaceService
     int placeId,
     PlaceType newType,
     User currentUser
-);
+    );
+
+
+     // 🔴 DELETE
+    Task DeletePlaceAsync(
+        int placeId,
+        User currentUser
+    );
+
 }

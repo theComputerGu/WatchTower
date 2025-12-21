@@ -10,6 +10,7 @@ type Props = {
   places: PlaceResponse[];
   pendingPoint?: PendingPoint;
   onEditType: (placeId: number, type: PlaceType) => void;
+  onDelete: (placeId: number) => void;
 };
 
 // =======================
@@ -64,6 +65,7 @@ export default function DevicesLayer({
   places,
   pendingPoint,
   onEditType,
+  onDelete,
 }: Props) {
   return (
     <>
@@ -84,6 +86,31 @@ export default function DevicesLayer({
                 }
               />
             </div>
+
+            {/* 🗑️ DELETE */}
+            <button
+              style={{
+                marginTop: 10,
+                width: "100%",
+                background: "#ef4444",
+                color: "white",
+                border: "none",
+                borderRadius: 8,
+                padding: "8px 10px",
+                cursor: "pointer",
+              }}
+              onClick={() => {
+                if (
+                  window.confirm(
+                    `Are you sure you want to delete place #${place.id}?`
+                  )
+                ) {
+                  onDelete(place.id);
+                }
+              }}
+            >
+              🗑️ Delete
+            </button>
           </Popup>
         </Marker>
       ))}

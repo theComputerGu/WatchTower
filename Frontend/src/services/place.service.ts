@@ -19,3 +19,9 @@ export async function updatePlaceType(
 ): Promise<void> {
   await api.patch(`/places/${placeId}/type`, { type });
 }
+
+
+// ✅ DELETE
+export async function deletePlace(placeId: number): Promise<void> {
+  await api.delete(`/places/${placeId}`);
+}
