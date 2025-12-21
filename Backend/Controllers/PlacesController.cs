@@ -18,10 +18,10 @@ public class PlacesController : ControllerBase
         _placeService = placeService;
     }
 
+    //create Place
     [HttpPost]
     [Authorize(Roles = "GLOBAL_ADMIN,AREA_ADMIN")]
-    public async Task<IActionResult> CreatePlace(
-        [FromBody] CreatePlaceRequest request)
+    public async Task<IActionResult> CreatePlace([FromBody] CreatePlaceRequest request)
     {
         var user = HttpContext.Items["User"] as User;
         if (user == null) return Unauthorized();
@@ -30,69 +30,47 @@ public class PlacesController : ControllerBase
         return Ok(place);
     }
 
-[HttpGet]
-[Authorize(Roles = "GLOBAL_ADMIN,AREA_ADMIN")]
-public async Task<IActionResult> GetPlaces()
-{
-
-    Console.WriteLine("===== AUTH DEBUG =====");
-Console.WriteLine($"IsAuthenticated: {User.Identity?.IsAuthenticated}");
-Console.WriteLine($"User.Identity.Name: {User.Identity?.Name}");
-
-foreach (var claim in User.Claims)
-{
-    Console.WriteLine($"CLAIM -> {claim.Type} = {claim.Value}");
-}
-Console.WriteLine("======================");
-    var user = HttpContext.Items["User"] as User;
-    if (user == null)
+    //get all places
+    [HttpGet]
+    [Authorize(Roles = "GLOBAL_ADMIN,AREA_ADMIN")]
+    public async Task<IActionResult> GetPlaces()
     {
-        Console.WriteLine("❌ HttpContext.Items['User'] is null");
-        return Unauthorized();
+
+        var user = HttpContext.Items["User"] as User;
+        if (user == null)
+        {
+            Console.WriteLine("❌ HttpContext.Items['User'] is null");
+            return Unauthorized();
+        }
+
+
+        var places = await _placeService.GetPlacesForUserAsync(user);
+        return Ok(places);
     }
 
-    Console.WriteLine("===== AUTH DEBUG =====");
-    Console.WriteLine($"UserId: {user.Id}");
-    Console.WriteLine($"User.Role (DB): {user.Role}");
-
-    foreach (var claim in User.Claims)
+    [HttpPatch("{id}/type")]
+    [Authorize(Roles = "GLOBAL_ADMIN,AREA_ADMIN")]
+    public async Task<IActionResult> UpdatePlaceType(int id,[FromBody] UpdatePlaceTypeRequest request)
     {
-        Console.WriteLine($"CLAIM -> {claim.Type} = {claim.Value}");
+        var user = HttpContext.Items["User"] as User;
+        if (user == null) return Unauthorized();
+
+        await _placeService.UpdatePlaceTypeAsync(id,request.Type,user);
+
+        return NoContent();
     }
-    Console.WriteLine("======================");
-
-    var places = await _placeService.GetPlacesForUserAsync(user);
-    return Ok(places);
-}
-
-[HttpPatch("{id}/type")]
-[Authorize(Roles = "GLOBAL_ADMIN,AREA_ADMIN")]
-public async Task<IActionResult> UpdatePlaceType(
-    int id,
-    [FromBody] UpdatePlaceTypeRequest request)
-{
-    var user = HttpContext.Items["User"] as User;
-    if (user == null) return Unauthorized();
-
-    await _placeService.UpdatePlaceTypeAsync(
-        id,
-        request.Type,
-        user);
-
-    return NoContent();
-}
 
 
-[HttpDelete("{placeId}")]
-[Authorize(Roles = "GLOBAL_ADMIN,AREA_ADMIN")]
-public async Task<IActionResult> DeletePlace(int placeId)
-{
-    var user = HttpContext.Items["User"] as User;
-    if (user == null) return Unauthorized();
+    [HttpDelete("{placeId}")]
+    [Authorize(Roles = "GLOBAL_ADMIN,AREA_ADMIN")]
+    public async Task<IActionResult> DeletePlace(int placeId)
+    {
+        var user = HttpContext.Items["User"] as User;
+        if (user == null) return Unauthorized();
 
-    await _placeService.DeletePlaceAsync(placeId, user);
-    return NoContent();
-}
+        await _placeService.DeletePlaceAsync(placeId, user);
+        return NoContent();
+    }
 
 
 

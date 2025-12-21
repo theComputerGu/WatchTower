@@ -22,7 +22,6 @@ public interface IPlaceService
     );
 
 
-     // 🔴 DELETE
     Task DeletePlaceAsync(
         int placeId,
         User currentUser
