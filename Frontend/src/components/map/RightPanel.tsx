@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import "./RightPanel.css";
 
 type Props = {
   title: string;
@@ -7,11 +8,14 @@ type Props = {
 
 export default function RightPanel({ title, children }: Props) {
   return (
-    <div className="right-panel">
-      <h3>{title}</h3>
+    <aside className="right-panel">
+      <div className="right-panel-header">
+        <h3>{title}</h3>
+      </div>
+
       <div className="right-panel-content">
         {children}
       </div>
-    </div>
+    </aside>
   );
 }
