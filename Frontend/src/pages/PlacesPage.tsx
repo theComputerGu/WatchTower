@@ -8,7 +8,11 @@ import PolygonLayer from "../components/map/PolygonLayer";
 import DevicesLayer from "../components/map/DevicesLayer";
 
 import { getAreas, getMyAreas } from "../services/area.service";
-import { getPlaces, createPlace } from "../services/place.service";
+import {
+  getPlaces,
+  createPlace,
+  updatePlaceType,
+} from "../services/place.service";
 
 import type { Area } from "../models/Area";
 import type { PlaceResponse, PlaceType } from "../types/place.types";
@@ -28,10 +32,7 @@ export default function PlacesPage() {
   // ============================
   const [areas, setAreas] = useState<Area[]>([]);
   const [places, setPlaces] = useState<PlaceResponse[]>([]);
-
-  // 👇 חשוב: יכול להיות null (נקודה ריקה)
   const [selectedType, setSelectedType] = useState<PlaceType | null>(null);
-
   const [loading, setLoading] = useState(true);
 
   // ============================
@@ -61,7 +62,7 @@ export default function PlacesPage() {
         setAreas(areasData);
         setPlaces(placesData);
       } catch (err) {
-        console.error("Failed to load places page data", err);
+        console.error("Failed to load places", err);
       } finally {
         setLoading(false);
       }
@@ -80,7 +81,7 @@ export default function PlacesPage() {
   }
 
   // ============================
-  // Create place
+  // CREATE
   // ============================
   async function handleConfirmCreate() {
     if (!pendingPoint) return;
@@ -89,28 +90,46 @@ export default function PlacesPage() {
     setStatusMsg(null);
 
     try {
-      // 👇 payload חכם – לא שולחים type אם אין
       const payload: any = {
         latitude: pendingPoint.lat,
         longitude: pendingPoint.lng,
       };
 
-      if (selectedType) {
-        payload.type = selectedType;
-      }
+      if (selectedType) payload.type = selectedType;
 
       const newPlace = await createPlace(payload);
 
       setPlaces((prev) => [...prev, newPlace]);
       setPendingPoint(null);
       setIsPlacing(false);
-      setStatusMsg("✅ Place created successfully");
+      setStatusMsg("✅ Place created");
     } catch (err: any) {
       setStatusMsg(
         err?.response?.data?.message || "❌ Failed to create place"
       );
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  // ============================
+  // EDIT
+  // ============================
+  async function handleEditPlaceType(
+    placeId: number,
+    newType: PlaceType
+  ) {
+    try {
+      await updatePlaceType(placeId, newType);
+
+      setPlaces((prev) =>
+        prev.map((p) =>
+          p.id === placeId ? { ...p, type: newType } : p
+        )
+      );
+    } catch (err) {
+      console.error("Failed to update place type", err);
+      alert("Failed to update place type");
     }
   }
 
@@ -132,7 +151,11 @@ export default function PlacesPage() {
     <div className="page">
       <MapView onMapClick={handleMapClick}>
         <PolygonLayer areas={areas} interactive={!isPlacing} />
-        <DevicesLayer places={places} pendingPoint={pendingPoint} />
+        <DevicesLayer
+          places={places}
+          pendingPoint={pendingPoint}
+          onEditType={handleEditPlaceType}
+        />
       </MapView>
 
       <RightPanel title="Add Place">

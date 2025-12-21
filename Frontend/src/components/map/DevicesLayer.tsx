@@ -1,12 +1,15 @@
 import { Marker, Popup } from "react-leaflet";
 import L from "leaflet";
-import type { PlaceResponse } from "../../types/place.types";
+
+import type { PlaceResponse, PlaceType } from "../../types/place.types";
+import PlaceTypeSelector from "../places/PlaceTypeSelector";
 
 type PendingPoint = { lat: number; lng: number } | null;
 
 type Props = {
   places: PlaceResponse[];
   pendingPoint?: PendingPoint;
+  onEditType: (placeId: number, type: PlaceType) => void;
 };
 
 // =======================
@@ -26,13 +29,13 @@ const radarIcon = new L.Icon({
 });
 
 const emptyPointIcon = new L.Icon({
-  iconUrl: "/place.svg", // אייקון נקודה רגילה
+  iconUrl: "/place.svg",
   iconSize: [30, 30],
-  iconAnchor: [10, 20],
+  iconAnchor: [15, 30],
 });
 
 const pendingIcon = new L.Icon({
-  iconUrl: "/vite.svg", // אייקון זמני
+  iconUrl: "/vite.svg",
   iconSize: [24, 24],
   iconAnchor: [12, 24],
 });
@@ -41,7 +44,7 @@ const pendingIcon = new L.Icon({
 // Helpers
 // =======================
 
-function getPlaceIcon(type: PlaceResponse["type"]) {
+function getPlaceIcon(type: PlaceType) {
   switch (type) {
     case "Camera":
       return cameraIcon;
@@ -57,7 +60,11 @@ function getPlaceIcon(type: PlaceResponse["type"]) {
 // Component
 // =======================
 
-export default function DevicesLayer({ places, pendingPoint }: Props) {
+export default function DevicesLayer({
+  places,
+  pendingPoint,
+  onEditType,
+}: Props) {
   return (
     <>
       {places.map((place) => (
@@ -67,11 +74,16 @@ export default function DevicesLayer({ places, pendingPoint }: Props) {
           icon={getPlaceIcon(place.type)}
         >
           <Popup>
-            <strong>
-              {place.type === "None" ? "Empty Point" : place.type}
-            </strong>
-            <br />
-            Place #{place.id}
+            <strong>Place #{place.id}</strong>
+
+            <div style={{ marginTop: 8 }}>
+              <PlaceTypeSelector
+                value={place.type === "None" ? null : place.type}
+                onChange={(newType) =>
+                  onEditType(place.id, newType ?? "None")
+                }
+              />
+            </div>
           </Popup>
         </Marker>
       ))}
