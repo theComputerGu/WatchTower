@@ -6,6 +6,11 @@ export async function getAreas(): Promise<Area[]> {
   return res.data;
 }
 
+export async function getMyAreas(): Promise<Area[]> {
+  const res = await api.get<Area[]>("/areas/my");
+  return res.data;
+}
+
 export async function createArea(data: {
   name: string;
   description?: string;

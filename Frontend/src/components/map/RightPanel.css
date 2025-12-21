@@ -1,0 +1,135 @@
+/* ===============================
+   Right Panel – WatchTower UI
+   =============================== */
+
+/* צבעים כלליים (אם כבר קיימים – זה לא ידרוס) */
+:root {
+  --panel-bg: rgba(15, 23, 42, 0.88);
+  --panel-border: rgba(148, 163, 184, 0.14);
+  --panel-glow: rgba(59, 130, 246, 0.25);
+
+  --text-main: #e5e7eb;
+  --text-muted: #94a3b8;
+
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+
+  --radius: 16px;
+}
+
+/* ===== Panel container ===== */
+
+.right-panel {
+  width: 360px;
+  height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+
+  background: var(--panel-bg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+
+  border-left: 1px solid var(--panel-border);
+
+  box-shadow:
+    -12px 0 30px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+/* ===== Header ===== */
+
+.right-panel-header {
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.right-panel-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: var(--text-main);
+}
+
+/* ===== Content ===== */
+
+.right-panel-content {
+  flex: 1;
+  padding: 20px 22px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  overflow-y: auto;
+}
+
+/* ===== Sections inside panel ===== */
+
+.panel-section {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  padding: 14px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ===== Buttons ===== */
+
+.right-panel button {
+  width: 100%;
+  padding: 12px 14px;
+
+  background: linear-gradient(
+    180deg,
+    var(--primary),
+    var(--primary-hover)
+  );
+
+  border: none;
+  border-radius: 12px;
+
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.right-panel button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px var(--panel-glow);
+}
+
+.right-panel button:active {
+  transform: translateY(0);
+}
+
+/* ===== Secondary / Cancel button ===== */
+
+.right-panel .btn-secondary {
+  background: transparent;
+  border: 1px solid var(--panel-border);
+  color: var(--text-muted);
+}
+
+.right-panel .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: none;
+}
+
+/* ===== Scrollbar (יפה!) ===== */
+
+.right-panel-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.right-panel-content::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 10px;
+}

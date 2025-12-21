@@ -51,6 +51,74 @@ namespace Backend.Migrations
                     b.ToTable("Areas");
                 });
 
+            modelBuilder.Entity("Backend.Models.Camera", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("PlaceId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlaceId")
+                        .IsUnique();
+
+                    b.ToTable("Cameras");
+                });
+
+            modelBuilder.Entity("Backend.Models.Place", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AreaId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("float");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("float");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AreaId");
+
+                    b.ToTable("Places");
+                });
+
+            modelBuilder.Entity("Backend.Models.Radar", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("PlaceId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlaceId")
+                        .IsUnique();
+
+                    b.ToTable("Radars");
+                });
+
             modelBuilder.Entity("Backend.Models.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -94,6 +162,46 @@ namespace Backend.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("AreaAdminUser");
+                });
+
+            modelBuilder.Entity("Backend.Models.Camera", b =>
+                {
+                    b.HasOne("Backend.Models.Place", "Place")
+                        .WithOne("Camera")
+                        .HasForeignKey("Backend.Models.Camera", "PlaceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Place");
+                });
+
+            modelBuilder.Entity("Backend.Models.Place", b =>
+                {
+                    b.HasOne("Area", "Area")
+                        .WithMany()
+                        .HasForeignKey("AreaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Area");
+                });
+
+            modelBuilder.Entity("Backend.Models.Radar", b =>
+                {
+                    b.HasOne("Backend.Models.Place", "Place")
+                        .WithOne("Radar")
+                        .HasForeignKey("Backend.Models.Radar", "PlaceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Place");
+                });
+
+            modelBuilder.Entity("Backend.Models.Place", b =>
+                {
+                    b.Navigation("Camera");
+
+                    b.Navigation("Radar");
                 });
 
             modelBuilder.Entity("Backend.Models.User", b =>

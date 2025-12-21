@@ -33,7 +33,7 @@ namespace Backend.Controllers
         }
 
         //edit area
-        [HttpPut("{id}")]
+        [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, CreateAreaRequest request)
         {
             await _areaService.UpdateAsync(id, request);
@@ -41,7 +41,7 @@ namespace Backend.Controllers
         }
 
         //delete area
-        [HttpDelete("{id}")]
+        [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {
             await _areaService.DeleteAsync(id);
@@ -49,7 +49,7 @@ namespace Backend.Controllers
         }
 
         //relate area to admin
-        [HttpPut("{id}/assign-admin/{userId}")]
+        [HttpPut("{id:int}/assign-admin/{userId}")]
         public async Task<IActionResult> AssignAdmin(int id, Guid userId)
         {
             await _areaService.AssignAdminAsync(id, userId);
