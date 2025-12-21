@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Text.Json.Serialization;
+using Backend.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -54,6 +55,7 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAreaService, AreaService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IPlaceService, PlaceService>();
 
 //conection to front:
 builder.Services.AddCors(options =>
@@ -88,6 +90,8 @@ app.UseCors("AllowVite");
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseMiddleware<UserContextMiddleware>();
 
 app.MapControllers();
 
