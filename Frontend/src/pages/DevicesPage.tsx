@@ -186,17 +186,35 @@ export default function DevicesPage() {
 
 
   async function handleDeleteDevice() {
-    if (!selectedDevice) return;
+  if (!selectedDevice) return;
 
-    await deleteDevice(selectedDevice.id);
+  const deletedDeviceId = selectedDevice.id;
 
-    setDevices((prev) =>
-      prev.filter((d) => d.id !== selectedDevice.id)
-    );
+  await deleteDevice(deletedDeviceId);
 
-    setSelectedDevice(null);
-    setRightPanelMode("DEFAULT");
-  }
+  // 🔥 1. הסרה מ-devices
+  setDevices((prev) =>
+    prev.filter((d) => d.id !== deletedDeviceId)
+  );
+
+  // 🔥 2. ניתוק מה-place (זה היה חסר!)
+  setPlaces((prev) =>
+    prev.map((p) =>
+      p.deviceId === deletedDeviceId
+        ? {
+            ...p,
+            deviceId: null,
+            deviceType: null,
+          }
+        : p
+    )
+  );
+
+  // 🔥 3. ניקוי UI
+  setSelectedDevice(null);
+  setRightPanelMode("DEFAULT");
+}
+
 
   async function handleChangeUsers(userIds: string[]) {
     if (!selectedDevice) return;
