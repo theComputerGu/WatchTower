@@ -9,8 +9,7 @@ public class Place
     public double Longitude { get; set; }
     public int AreaId { get; set; }
     public Area Area { get; set; } = null!;
-    public Camera? Camera { get; set; }
-    public Radar? Radar { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
-     public PlaceType Type { get; set; } = PlaceType.None;
+    public PlaceType Type { get; set; } = PlaceType.None;
+     public Device? Device { get; set; }
 }

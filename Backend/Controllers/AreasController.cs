@@ -2,12 +2,13 @@ using Backend.DTOs.Areas;
 using Backend.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
+using Backend.Models;
+using Backend.Models.Enums;
 namespace Backend.Controllers
 {
     [ApiController]
     [Route("api/areas")]
-    [Authorize(Roles = "GLOBAL_ADMIN")]
+    [Authorize(Roles = "GLOBAL_ADMIN,AREA_ADMIN")]
     public class AreasController : ControllerBase
     {
         private readonly IAreaService _areaService;
@@ -18,11 +19,31 @@ namespace Backend.Controllers
         }
 
         //get all areas
-        [HttpGet]
+       [HttpGet]
+        [Authorize(Roles = "GLOBAL_ADMIN,AREA_ADMIN")]
         public async Task<ActionResult<List<AreaResponse>>> GetAll()
         {
-            return await _areaService.GetAllAsync();
+            var user = HttpContext.Items["User"] as User;
+            if (user == null)
+                return Unauthorized();
+
+            if (user.Role == UserRole.GLOBAL_ADMIN)
+            {
+                return await _areaService.GetAllAsync();
+            }
+
+            // AREA_ADMIN
+            return user.ManagedAreas.Select(a => new AreaResponse
+            {
+                Id = a.Id,
+                Name = a.Name,
+                Description = a.Description,
+                PolygonGeoJson = a.PolygonGeoJson,
+                AreaAdminUserId = a.AreaAdminUserId,
+                AreaAdminName = user.Username
+            }).ToList();
         }
+
 
         //create area
         [HttpPost]

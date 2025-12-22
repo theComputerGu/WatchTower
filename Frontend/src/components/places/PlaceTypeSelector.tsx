@@ -1,4 +1,4 @@
-import type { PlaceType } from "../../types/place.types";
+import type { PlaceType } from "../../types/place.types.ts";
 
 interface Props {
   value: PlaceType | null;

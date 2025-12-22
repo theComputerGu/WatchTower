@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251221142932_RestoreCamerasAndRadars")]
-    partial class RestoreCamerasAndRadars
+    [Migration("20251222103431_InitialDeviceTargetModel")]
+    partial class InitialDeviceTargetModel
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -54,7 +54,7 @@ namespace Backend.Migrations
                     b.ToTable("Areas");
                 });
 
-            modelBuilder.Entity("Backend.Models.Camera", b =>
+            modelBuilder.Entity("Backend.Models.Device", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -62,15 +62,57 @@ namespace Backend.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("AreaId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("float");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("OrientationAngle")
+                        .HasColumnType("float");
+
                     b.Property<int>("PlaceId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TargetId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Type")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AreaId");
+
                     b.HasIndex("PlaceId")
                         .IsUnique();
 
-                    b.ToTable("Cameras");
+                    b.HasIndex("TargetId")
+                        .IsUnique()
+                        .HasFilter("[TargetId] IS NOT NULL");
+
+                    b.ToTable("Devices");
+                });
+
+            modelBuilder.Entity("Backend.Models.DeviceUser", b =>
+                {
+                    b.Property<int>("DeviceId")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("DeviceId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("DeviceUsers");
                 });
 
             modelBuilder.Entity("Backend.Models.Place", b =>
@@ -103,7 +145,7 @@ namespace Backend.Migrations
                     b.ToTable("Places");
                 });
 
-            modelBuilder.Entity("Backend.Models.Radar", b =>
+            modelBuilder.Entity("Backend.Models.Target", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -111,15 +153,34 @@ namespace Backend.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("PlaceId")
+                    b.Property<int>("AreaId")
                         .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("DeviceId")
+                        .HasColumnType("int");
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("float");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PlaceId")
-                        .IsUnique();
+                    b.HasIndex("AreaId");
 
-                    b.ToTable("Radars");
+                    b.HasIndex("DeviceId")
+                        .IsUnique()
+                        .HasFilter("[DeviceId] IS NOT NULL");
+
+                    b.ToTable("Targets");
                 });
 
             modelBuilder.Entity("Backend.Models.User", b =>
@@ -167,15 +228,49 @@ namespace Backend.Migrations
                     b.Navigation("AreaAdminUser");
                 });
 
-            modelBuilder.Entity("Backend.Models.Camera", b =>
+            modelBuilder.Entity("Backend.Models.Device", b =>
                 {
+                    b.HasOne("Area", "Area")
+                        .WithMany("Devices")
+                        .HasForeignKey("AreaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Backend.Models.Place", "Place")
-                        .WithOne("Camera")
-                        .HasForeignKey("Backend.Models.Camera", "PlaceId")
+                        .WithOne("Device")
+                        .HasForeignKey("Backend.Models.Device", "PlaceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Models.Target", "Target")
+                        .WithOne("Device")
+                        .HasForeignKey("Backend.Models.Device", "TargetId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Area");
+
+                    b.Navigation("Place");
+
+                    b.Navigation("Target");
+                });
+
+            modelBuilder.Entity("Backend.Models.DeviceUser", b =>
+                {
+                    b.HasOne("Backend.Models.Device", "Device")
+                        .WithMany("DeviceUsers")
+                        .HasForeignKey("DeviceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Place");
+                    b.HasOne("Backend.Models.User", "User")
+                        .WithMany("DeviceUsers")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Device");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Backend.Models.Place", b =>
@@ -189,26 +284,43 @@ namespace Backend.Migrations
                     b.Navigation("Area");
                 });
 
-            modelBuilder.Entity("Backend.Models.Radar", b =>
+            modelBuilder.Entity("Backend.Models.Target", b =>
                 {
-                    b.HasOne("Backend.Models.Place", "Place")
-                        .WithOne("Radar")
-                        .HasForeignKey("Backend.Models.Radar", "PlaceId")
+                    b.HasOne("Area", "Area")
+                        .WithMany("Targets")
+                        .HasForeignKey("AreaId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Place");
+                    b.Navigation("Area");
+                });
+
+            modelBuilder.Entity("Area", b =>
+                {
+                    b.Navigation("Devices");
+
+                    b.Navigation("Targets");
+                });
+
+            modelBuilder.Entity("Backend.Models.Device", b =>
+                {
+                    b.Navigation("DeviceUsers");
                 });
 
             modelBuilder.Entity("Backend.Models.Place", b =>
                 {
-                    b.Navigation("Camera");
+                    b.Navigation("Device");
+                });
 
-                    b.Navigation("Radar");
+            modelBuilder.Entity("Backend.Models.Target", b =>
+                {
+                    b.Navigation("Device");
                 });
 
             modelBuilder.Entity("Backend.Models.User", b =>
                 {
+                    b.Navigation("DeviceUsers");
+
                     b.Navigation("ManagedAreas");
                 });
 #pragma warning restore 612, 618
