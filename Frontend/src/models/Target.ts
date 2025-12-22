@@ -1,10 +1,12 @@
-export interface Place {
+export interface Target {
   id: number;
+  name: string;
+  description?: string;
+
   latitude: number;
   longitude: number;
+
   areaId: number;
 
-  // Device (אם קיים)
   deviceId?: number | null;
-  deviceType?: "Camera" | "Radar" | null;
 }

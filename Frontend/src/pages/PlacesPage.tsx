@@ -2,51 +2,41 @@ import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import type { RootState } from "../store";
 
+import { Marker } from "react-leaflet";
+import L from "leaflet";
+
 import MapView from "../components/map/MapView";
 import RightPanel from "../components/map/RightPanel";
 import PolygonLayer from "../components/map/PolygonLayer";
-import DevicesLayer from "../components/map/DevicesLayer";
+import PlacesLayer from "../components/map/PlacesLayer";
 
 import { getAreas, getMyAreas } from "../services/area.service";
-import {
-  getPlaces,
-  createPlace,
-  updatePlaceType,
-  deletePlace,
-} from "../services/place.service";
+import { getPlaces, createPlace, deletePlace } from "../services/place.service";
 
 import type { Area } from "../models/Area";
-import type { PlaceResponse, PlaceType } from "../types/place.types";
-
-import PlaceTypeSelector from "../components/places/PlaceTypeSelector";
+import type { PlaceResponse } from "../types/place.types";
 
 type PendingPoint = { lat: number; lng: number } | null;
 
+/* 🔵 TEMP ICON */
+const pendingIcon = new L.Icon({
+  iconUrl: "/place.svg",
+  iconSize: [30, 30],
+  iconAnchor: [15, 30],
+});
+
 export default function PlacesPage() {
-  // ============================
-  // Auth
-  // ============================
   const user = useSelector((state: RootState) => state.auth.user);
 
-  // ============================
-  // Data
-  // ============================
   const [areas, setAreas] = useState<Area[]>([]);
   const [places, setPlaces] = useState<PlaceResponse[]>([]);
-  const [selectedType, setSelectedType] = useState<PlaceType | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // ============================
-  // Placement state
-  // ============================
   const [isPlacing, setIsPlacing] = useState(false);
   const [pendingPoint, setPendingPoint] = useState<PendingPoint>(null);
   const [submitting, setSubmitting] = useState(false);
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
 
-  // ============================
-  // Initial load
-  // ============================
   useEffect(() => {
     async function load() {
       if (!user) return;
@@ -62,8 +52,6 @@ export default function PlacesPage() {
 
         setAreas(areasData);
         setPlaces(placesData);
-      } catch (err) {
-        console.error("Failed to load places", err);
       } finally {
         setLoading(false);
       }
@@ -72,18 +60,12 @@ export default function PlacesPage() {
     load();
   }, [user]);
 
-  // ============================
-  // Map click
-  // ============================
   function handleMapClick(lat: number, lng: number) {
     if (!isPlacing) return;
     setPendingPoint({ lat, lng });
     setStatusMsg(null);
   }
 
-  // ============================
-  // CREATE
-  // ============================
   async function handleConfirmCreate() {
     if (!pendingPoint) return;
 
@@ -91,66 +73,27 @@ export default function PlacesPage() {
     setStatusMsg(null);
 
     try {
-      const payload: any = {
+      const newPlace = await createPlace({
         latitude: pendingPoint.lat,
         longitude: pendingPoint.lng,
-      };
-
-      if (selectedType) payload.type = selectedType;
-
-      const newPlace = await createPlace(payload);
+      });
 
       setPlaces((prev) => [...prev, newPlace]);
       setPendingPoint(null);
       setIsPlacing(false);
       setStatusMsg("✅ Place created");
     } catch (err: any) {
-      setStatusMsg(
-        err?.response?.data?.message || "❌ Failed to create place"
-      );
+      setStatusMsg("❌ Failed to create place");
     } finally {
       setSubmitting(false);
     }
   }
 
-  // ============================
-  // EDIT
-  // ============================
-  async function handleEditPlaceType(
-    placeId: number,
-    newType: PlaceType
-  ) {
-    try {
-      await updatePlaceType(placeId, newType);
-
-      setPlaces((prev) =>
-        prev.map((p) =>
-          p.id === placeId ? { ...p, type: newType } : p
-        )
-      );
-    } catch (err) {
-      console.error("Failed to update place type", err);
-      alert("Failed to update place type");
-    }
-  }
-  // ============================
-// DELETE
-// ============================
-async function handleDeletePlace(placeId: number) {
-  try {
+  async function handleDeletePlace(placeId: number) {
     await deletePlace(placeId);
-
-    setPlaces((prev) =>
-      prev.filter((p) => p.id !== placeId)
-    );
-  } catch (err) {
-    console.error("Failed to delete place", err);
-    alert("Failed to delete place");
+    setPlaces((prev) => prev.filter((p) => p.id !== placeId));
   }
-}
-  // ============================
-  // Cancel
-  // ============================
+
   function handleCancel() {
     setPendingPoint(null);
     setIsPlacing(false);
@@ -159,20 +102,24 @@ async function handleDeletePlace(placeId: number) {
 
   if (loading) return <div>Loading...</div>;
 
-  // ============================
-  // Render
-  // ============================
   return (
     <div className="page">
       <MapView onMapClick={handleMapClick}>
         <PolygonLayer areas={areas} interactive={!isPlacing} />
-        <DevicesLayer
-  places={places}
-  pendingPoint={pendingPoint}
-  onEditType={handleEditPlaceType}
-  onDelete={handleDeletePlace}
-/>
 
+        {/* 🔵 TEMP PLACE MARKER */}
+        {pendingPoint && (
+          <Marker
+            position={[pendingPoint.lat, pendingPoint.lng]}
+            icon={pendingIcon}
+            opacity={0.6}
+          />
+        )}
+
+        <PlacesLayer
+          places={places}
+          onDelete={handleDeletePlace}
+        />
       </MapView>
 
       <RightPanel title="Add Place">
@@ -184,16 +131,8 @@ async function handleDeletePlace(placeId: number) {
             setStatusMsg(null);
           }}
         >
-          📍 {isPlacing ? "Placing device..." : "Add Device"}
+          📍 {isPlacing ? "Placing place..." : "Add Place"}
         </button>
-
-        <div style={{ marginTop: 12 }}>
-          <label>Device Type</label>
-          <PlaceTypeSelector
-            value={selectedType}
-            onChange={setSelectedType}
-          />
-        </div>
 
         {isPlacing && (
           <>

@@ -8,5 +8,7 @@ public class Area
     public string PolygonGeoJson { get; set; } = null!;
     public Guid? AreaAdminUserId { get; set; }
     public User? AreaAdminUser { get; set; }
+    public ICollection<Device> Devices { get; set; } = new List<Device>();
+    public ICollection<Target> Targets { get; set; } = new List<Target>();
 }
 

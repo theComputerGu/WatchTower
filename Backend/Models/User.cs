@@ -19,4 +19,6 @@ public class User
     public bool IsActive { get; set; }
 
     public ICollection<Area> ManagedAreas { get; set; }= new List<Area>();
+
+    public ICollection<DeviceUser> DeviceUsers { get; set; } = new List<DeviceUser>();
 }

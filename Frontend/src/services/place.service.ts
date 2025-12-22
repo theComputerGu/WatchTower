@@ -1,5 +1,5 @@
 import api from "./api";
-import type { PlaceResponse, CreatePlaceRequest,PlaceType  } from "../types/place.types";
+import type { PlaceResponse, CreatePlaceRequest,PlaceType  } from "../types/place.types.ts";
 
 export async function getPlaces(): Promise<PlaceResponse[]> {
   const res = await api.get<PlaceResponse[]>("/places");

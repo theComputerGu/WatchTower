@@ -19,13 +19,20 @@ public class PlaceService : IPlaceService
         _db = db;
     }
 
-    public async Task<PlaceResponse> CreatePlaceAsync(CreatePlaceRequest request,User currentUser)
+    // =========================
+    // CREATE PLACE
+    // =========================
+    public async Task<PlaceResponse> CreatePlaceAsync(
+        CreatePlaceRequest request,
+        User currentUser)
     {
         Area matchedArea;
 
+        // GLOBAL ADMIN – חיפוש אזור לפי פוליגון
         if (currentUser.Role == UserRole.GLOBAL_ADMIN)
         {
-            var areas = await _db.Areas.AsNoTracking()
+            var areas = await _db.Areas
+                .AsNoTracking()
                 .Where(a => !string.IsNullOrWhiteSpace(a.PolygonGeoJson))
                 .ToListAsync();
 
@@ -36,75 +43,77 @@ public class PlaceService : IPlaceService
                     area.PolygonGeoJson));
 
             if (matchedArea == null)
-                throw new InvalidOperationException("Place is not inside any area");
+                throw new InvalidOperationException(
+                    "Place is not inside any area");
         }
-
+        // AREA ADMIN – רק באזור שלו
         else
         {
             matchedArea = currentUser.ManagedAreas.Single();
 
-            if (!IsPointInsidePolygon(request.Latitude,request.Longitude,matchedArea.PolygonGeoJson))
+            if (!IsPointInsidePolygon(
+                request.Latitude,
+                request.Longitude,
+                matchedArea.PolygonGeoJson))
             {
-                throw new UnauthorizedAccessException("Place is not inside your area");
+                throw new UnauthorizedAccessException(
+                    "Place is not inside your area");
             }
         }
-
-        var resolvedType = request.Type ?? PlaceType.None;
 
         var place = new Place
         {
             Latitude = request.Latitude,
             Longitude = request.Longitude,
-            AreaId = matchedArea.Id,
-            Type = resolvedType
+            AreaId = matchedArea.Id
         };
 
         _db.Places.Add(place);
         await _db.SaveChangesAsync();
 
-
-        switch (resolvedType)
+        // אם נבחר סוג – יוצרים Device
+        if (request.Type.HasValue &&
+            request.Type != PlaceType.None)
         {
-            case PlaceType.Camera:
-                _db.Cameras.Add(new Camera
-                {
-                    PlaceId = place.Id
-                });
-                break;
+            var deviceType =
+                request.Type == PlaceType.Camera
+                    ? DeviceType.Camera
+                    : DeviceType.Radar;
 
-            case PlaceType.Radar:
-                _db.Radars.Add(new Radar
-                {
-                    PlaceId = place.Id
-                });
-                break;
+            var device = new Device
+            {
+                Type = deviceType,
+                PlaceId = place.Id,
+                AreaId = matchedArea.Id,
+                Latitude = place.Latitude,
+                Longitude = place.Longitude,
+                IsActive = false // אין Target → לא פעיל
+            };
 
-            case PlaceType.None:
-            default:
-            
-                break;
+            _db.Devices.Add(device);
+            await _db.SaveChangesAsync();
         }
 
-        await _db.SaveChangesAsync();
-
-    
         return new PlaceResponse
         {
             Id = place.Id,
             Latitude = place.Latitude,
             Longitude = place.Longitude,
-            Type = place.Type,
-            AreaId = place.AreaId
+            AreaId = place.AreaId,
+            DeviceId = place.Device?.Id,
+            DeviceType = place.Device?.Type
         };
     }
 
-
-    public async Task<List<PlaceResponse>> GetPlacesForUserAsync(User currentUser)
+    // =========================
+    // GET PLACES
+    // =========================
+    public async Task<List<PlaceResponse>> GetPlacesForUserAsync(
+        User currentUser)
     {
         IQueryable<Place> query = _db.Places
             .AsNoTracking()
-            .Include(p => p.Camera)
-            .Include(p => p.Radar);
+            .Include(p => p.Device);
 
         if (currentUser.Role != UserRole.GLOBAL_ADMIN)
         {
@@ -117,62 +126,26 @@ public class PlaceService : IPlaceService
             Id = p.Id,
             Latitude = p.Latitude,
             Longitude = p.Longitude,
-            Type = p.Type,
             AreaId = p.AreaId,
-            CameraId = p.Camera != null ? p.Camera.Id : null,
-            RadarId  = p.Radar  != null ? p.Radar.Id  : null
+            DeviceId = p.Device != null ? p.Device.Id : null,
+            DeviceType = p.Device != null ? p.Device.Type : null
         }).ToListAsync();
     }
 
-
-    private bool IsPointInsidePolygon(double lat,double lng,string polygonGeoJson)
-    {
-        try
-        {
-            var json = JObject.Parse(polygonGeoJson);
-
-        
-            if (json["type"]?.ToString() == "Feature")
-            {
-                json = (JObject)json["geometry"]!;
-            }
-
-            var reader = new GeoJsonReader();
-            var geometry = reader.Read<Geometry>(json.ToString());
-            geometry.SRID = 4326;
-
-            var point = new Point(lng, lat)
-            {
-                SRID = 4326
-            };
-
-            bool contains = geometry.Contains(point);
-            bool covers   = geometry.Covers(point);
-
-            Console.WriteLine($"Contains={contains}, Covers={covers}");
-
-
-            return covers;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("❌ ERROR in IsPointInsidePolygon");
-            Console.WriteLine(ex.Message);
-            return false;
-        }
-    }
-
-
-    public async Task UpdatePlaceTypeAsync(int placeId,PlaceType newType,User currentUser)
+    // =========================
+    // UPDATE PLACE TYPE
+    // =========================
+    public async Task UpdatePlaceTypeAsync(
+        int placeId,
+        PlaceType newType,
+        User currentUser)
     {
         var place = await _db.Places
-            .Include(p => p.Camera)
-            .Include(p => p.Radar)
+            .Include(p => p.Device)
             .FirstOrDefaultAsync(p => p.Id == placeId);
 
         if (place == null)
             throw new KeyNotFoundException("Place not found");
-
 
         if (currentUser.Role != UserRole.GLOBAL_ADMIN)
         {
@@ -181,34 +154,45 @@ public class PlaceService : IPlaceService
                 throw new UnauthorizedAccessException();
         }
 
+        // אם יש Device – מוחקים אותו
+        if (place.Device != null)
+        {
+            _db.Devices.Remove(place.Device);
+        }
 
-        if (place.Camera != null)
-            _db.Cameras.Remove(place.Camera);
+        // אם סוג חדש ≠ None – יוצרים Device חדש
+        if (newType != PlaceType.None)
+        {
+            var deviceType =
+                newType == PlaceType.Camera
+                    ? DeviceType.Camera
+                    : DeviceType.Radar;
 
-        if (place.Radar != null)
-            _db.Radars.Remove(place.Radar);
+            var device = new Device
+            {
+                Type = deviceType,
+                PlaceId = place.Id,
+                AreaId = place.AreaId,
+                Latitude = place.Latitude,
+                Longitude = place.Longitude,
+                IsActive = false
+            };
 
-
-        place.Type = newType;
-
-    
-        if (newType == PlaceType.Camera)
-            _db.Cameras.Add(new Camera { PlaceId = place.Id });
-        else if (newType == PlaceType.Radar)
-            _db.Radars.Add(new Radar { PlaceId = place.Id });
+            _db.Devices.Add(device);
+        }
 
         await _db.SaveChangesAsync();
     }
 
-
-
+    // =========================
+    // DELETE PLACE
+    // =========================
     public async Task DeletePlaceAsync(
         int placeId,
         User currentUser)
     {
         var place = await _db.Places
-            .Include(p => p.Camera)
-            .Include(p => p.Radar)
+            .Include(p => p.Device)
             .FirstOrDefaultAsync(p => p.Id == placeId);
 
         if (place == null)
@@ -222,18 +206,42 @@ public class PlaceService : IPlaceService
                     "You are not allowed to delete this place");
         }
 
-
-        if (place.Camera != null)
-            _db.Cameras.Remove(place.Camera);
-
-        if (place.Radar != null)
-            _db.Radars.Remove(place.Radar);
-
+        if (place.Device != null)
+            _db.Devices.Remove(place.Device);
 
         _db.Places.Remove(place);
-
         await _db.SaveChangesAsync();
     }
 
+    // =========================
+    // GEO HELPER
+    // =========================
+    private bool IsPointInsidePolygon(
+        double lat,
+        double lng,
+        string polygonGeoJson)
+    {
+        try
+        {
+            var json = JObject.Parse(polygonGeoJson);
 
+            if (json["type"]?.ToString() == "Feature")
+                json = (JObject)json["geometry"]!;
+
+            var reader = new GeoJsonReader();
+            var geometry = reader.Read<Geometry>(json.ToString());
+            geometry.SRID = 4326;
+
+            var point = new Point(lng, lat)
+            {
+                SRID = 4326
+            };
+
+            return geometry.Covers(point);
+        }
+        catch
+        {
+            return false;
+        }
+    }
 }

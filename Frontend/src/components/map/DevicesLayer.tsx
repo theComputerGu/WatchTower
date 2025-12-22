@@ -1,16 +1,16 @@
-import { Marker, Popup } from "react-leaflet";
+import { Marker, Popup, Polygon } from "react-leaflet";
 import L from "leaflet";
 
-import type { PlaceResponse, PlaceType } from "../../types/place.types";
-import PlaceTypeSelector from "../places/PlaceTypeSelector";
-
-type PendingPoint = { lat: number; lng: number } | null;
+import type { PlaceResponse } from "../../types/place.types";
+import { buildCone } from "../../utils/geo";
 
 type Props = {
   places: PlaceResponse[];
-  pendingPoint?: PendingPoint;
-  onEditType: (placeId: number, type: PlaceType) => void;
-  onDelete: (placeId: number) => void;
+  onSelectDevice: (deviceId: number) => void;
+  onAddDevice: (
+    placeId: number,
+    type: "Camera" | "Radar"
+  ) => void;
 };
 
 // =======================
@@ -35,94 +35,102 @@ const emptyPointIcon = new L.Icon({
   iconAnchor: [15, 30],
 });
 
-const pendingIcon = new L.Icon({
-  iconUrl: "/vite.svg",
-  iconSize: [24, 24],
-  iconAnchor: [12, 24],
-});
-
-// =======================
-// Helpers
-// =======================
-
-function getPlaceIcon(type: PlaceType) {
-  switch (type) {
-    case "Camera":
-      return cameraIcon;
-    case "Radar":
-      return radarIcon;
-    case "None":
-    default:
-      return emptyPointIcon;
-  }
+function getPlaceIcon(deviceType?: "Camera" | "Radar" | null) {
+  if (deviceType === "Camera") return cameraIcon;
+  if (deviceType === "Radar") return radarIcon;
+  return emptyPointIcon;
 }
-
-// =======================
-// Component
-// =======================
 
 export default function DevicesLayer({
   places,
-  pendingPoint,
-  onEditType,
-  onDelete,
+  onSelectDevice,
+  onAddDevice,
 }: Props) {
   return (
     <>
+      {/* ===== MARKERS ===== */}
       {places.map((place) => (
         <Marker
           key={place.id}
           position={[place.latitude, place.longitude]}
-          icon={getPlaceIcon(place.type)}
+          icon={getPlaceIcon(place.deviceType)}
         >
           <Popup>
             <strong>Place #{place.id}</strong>
 
-            <div style={{ marginTop: 8 }}>
-              <PlaceTypeSelector
-                value={place.type === "None" ? null : place.type}
-                onChange={(newType) =>
-                  onEditType(place.id, newType ?? "None")
-                }
-              />
+            <div style={{ marginTop: 6 }}>
+              {place.deviceType ? (
+                <span>Device: {place.deviceType}</span>
+              ) : (
+                <span>Empty place</span>
+              )}
             </div>
 
-            {/* 🗑️ DELETE */}
-            <button
-              style={{
-                marginTop: 10,
-                width: "100%",
-                background: "#ef4444",
-                color: "white",
-                border: "none",
-                borderRadius: 8,
-                padding: "8px 10px",
-                cursor: "pointer",
-              }}
-              onClick={() => {
-                if (
-                  window.confirm(
-                    `Are you sure you want to delete place #${place.id}?`
-                  )
-                ) {
-                  onDelete(place.id);
+            {!place.deviceId && (
+              <>
+                <button
+                  style={{ marginTop: 10, width: "100%" }}
+                  onClick={() =>
+                    onAddDevice(place.id, "Camera")
+                  }
+                >
+                  ➕ Add Camera
+                </button>
+
+                <button
+                  style={{ marginTop: 6, width: "100%" }}
+                  onClick={() =>
+                    onAddDevice(place.id, "Radar")
+                  }
+                >
+                  ➕ Add Radar
+                </button>
+              </>
+            )}
+
+            {place.deviceId && (
+              <button
+                style={{ marginTop: 10, width: "100%" }}
+                onClick={() =>
+                  onSelectDevice(place.deviceId!)
                 }
-              }}
-            >
-              🗑️ Delete
-            </button>
+              >
+                ⚙️ Open Device
+              </button>
+            )}
           </Popup>
         </Marker>
       ))}
 
-      {pendingPoint && (
-        <Marker
-          position={[pendingPoint.lat, pendingPoint.lng]}
-          icon={pendingIcon}
-        >
-          <Popup>Pending point</Popup>
-        </Marker>
-      )}
+      {/* ===== CONES ===== */}
+      {places.map((place) => {
+        if (
+          !place.deviceId ||
+          !place.isActive ||
+          !place.targetLatitude ||
+          !place.targetLongitude
+        ) {
+          return null;
+        }
+
+        return (
+          <Polygon
+            key={`cone-${place.deviceId}`}
+            positions={buildCone(
+              [place.latitude, place.longitude],
+              [place.targetLatitude, place.targetLongitude]
+            )}
+            pathOptions={{
+              color:
+                place.deviceType === "Camera"
+                  ? "#f59e0b"
+                  : "#22c55e",
+              fillOpacity: 0.25,
+              weight: 1,
+            }}
+          />
+        );
+      })}
     </>
   );
 }
