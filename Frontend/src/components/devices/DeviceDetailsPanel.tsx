@@ -16,7 +16,6 @@ type Props = {
   onAssignTarget: (targetId: number) => void;
   onUnassignTarget: () => void;
 
-  onToggleActive: (isActive: boolean) => Promise<void>;
   onChangeUsers: (userIds: string[]) => Promise<void>;
   onDelete: () => Promise<void>;
   onBack?: () => void; // 👈 חדש
@@ -27,7 +26,6 @@ export default function DeviceDetailsPanel({
   targets,
   onAssignTarget,
   onUnassignTarget,
-  onToggleActive,
   onChangeUsers,
   onDelete,
   onBack, // 👈 זה מה שחסר
@@ -78,15 +76,6 @@ export default function DeviceDetailsPanel({
         selectedIds={device.userIds ?? []}
         onChange={onChangeUsers}
       />
-
-      <button
-        style={{ marginTop: 12 }}
-        onClick={() =>
-          onToggleActive(!device.isActive)
-        }
-      >
-        {device.isActive ? "Deactivate" : "Activate"}
-      </button>
 
       <hr />
 

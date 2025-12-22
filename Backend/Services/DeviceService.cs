@@ -92,6 +92,7 @@ public class DeviceService : IDeviceService
                 oldTarget.DeviceId = null;
 
             device.TargetId = null;
+            
         }
 
         // קשר חדש

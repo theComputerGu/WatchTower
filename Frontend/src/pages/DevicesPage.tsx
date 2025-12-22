@@ -12,7 +12,6 @@ import {
   getDevices,
   assignTarget,
   unassignTarget,
-  toggleDeviceActive,
   assignUsersToDevice,
   createDevice,
   deleteDevice,
@@ -185,22 +184,6 @@ export default function DevicesPage() {
     setSelectedDevice(updated);
   }
 
-  async function handleToggleActive(isActive: boolean) {
-    if (!selectedDevice) return;
-
-    const updated = await toggleDeviceActive(
-      selectedDevice.id,
-      isActive
-    );
-
-    setDevices((prev) =>
-      prev.map((d) =>
-        d.id === updated.id ? updated : d
-      )
-    );
-
-    setSelectedDevice(updated);
-  }
 
   async function handleDeleteDevice() {
     if (!selectedDevice) return;
@@ -378,7 +361,6 @@ const availableTargets = useMemo(() => {
   targets={availableTargets}
   onAssignTarget={handleAssignTarget}
   onUnassignTarget={handleUnassignTarget}
-  onToggleActive={handleToggleActive}
   onChangeUsers={handleChangeUsers}
   onDelete={handleDeleteDevice}
   onBack={() => setRightPanelMode("DEFAULT")} // 👈 זהו
