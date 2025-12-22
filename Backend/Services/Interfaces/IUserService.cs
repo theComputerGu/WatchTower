@@ -6,5 +6,7 @@ namespace Backend.Services.Interfaces
     {
         Task<List<UserListResponse>> GetAllAsync(Guid currentUserId);
         Task UpdateUserAsync(Guid userId, UpdateUserRequest request);
+
+        Task<List<UserSimpleResponse>> GetUsersInMyAreasAsync(Guid currentUserId);
     }
 }

@@ -22,3 +22,9 @@ export async function updateUser(
 
   await api.put(`/users/${userId}`, payload);
 }
+
+
+export async function getMyUsers() {
+  const res = await api.get("/users/my");
+  return res.data;
+}
