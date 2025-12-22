@@ -276,13 +276,28 @@ export default function DevicesPage() {
   // Pending cone
   // ============================
   const pendingCone = useMemo(() => {
-    if (!selectedDevice || !pendingPoint) return null;
+  if (
+    rightPanelMode !== "DEVICE_DETAILS" || // 👈 חשוב
+    !selectedDevice ||
+    !pendingPoint
+  ) {
+    return null;
+  }
 
-    return buildCone(
-      [selectedDevice.latitude, selectedDevice.longitude],
-      [pendingPoint.lat, pendingPoint.lng]
-    );
-  }, [selectedDevice, pendingPoint]);
+  return buildCone(
+    [selectedDevice.latitude, selectedDevice.longitude],
+    [pendingPoint.lat, pendingPoint.lng]
+  );
+}, [rightPanelMode, selectedDevice, pendingPoint]);
+
+
+const availableTargets = useMemo(() => {
+  return targets.filter(
+    (t) =>
+      t.deviceId == null ||
+      t.deviceId === selectedDevice?.id
+  );
+}, [targets, selectedDevice]);
 
   if (loading) return <div>Loading...</div>;
 
@@ -356,7 +371,7 @@ export default function DevicesPage() {
           selectedDevice && (
             <DeviceDetailsPanel
   device={selectedDevice}
-  targets={targets}
+  targets={availableTargets}
   onAssignTarget={handleAssignTarget}
   onUnassignTarget={handleUnassignTarget}
   onToggleActive={handleToggleActive}
@@ -382,7 +397,7 @@ setRightPanelMode("CREATE_TARGET");
             </button>
 
             <ul>
-              {targets.map((t) => (
+              {availableTargets.map((t) => (
                 <li key={t.id}>
                   {t.name}
                   {selectedDevice && (
