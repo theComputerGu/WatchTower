@@ -7,16 +7,8 @@ type PendingPoint = { lat: number; lng: number } | null;
 type Props = {
   targets: Target[];
   selectedTargetId?: number | null;
-
-  /**
-   * If provided → clicking an unlocked target assigns it
-   * If undefined → display only
-   */
   onSelectTarget?: (targetId: number) => void;
-
-  /**
-   * Temporary target marker while placing
-   */
+  onDeleteTarget?: (targetId: number) => void;
   pendingPoint?: PendingPoint;
 };
 
@@ -37,7 +29,7 @@ const selectedTargetIcon = new L.Icon({
 });
 
 const lockedTargetIcon = new L.Icon({
-  iconUrl: "/target.svg", // replace if you have a locked icon
+  iconUrl: "/target.svg",
   iconSize: [22, 22],
   iconAnchor: [11, 22],
 });
@@ -56,6 +48,7 @@ export default function TargetsLayer({
   targets,
   selectedTargetId,
   onSelectTarget,
+  onDeleteTarget,
   pendingPoint,
 }: Props) {
   return (
@@ -77,25 +70,46 @@ export default function TargetsLayer({
                 : targetIcon
             }
             eventHandlers={{
-              click: () => {
-                // Read-only mode
-                if (!onSelectTarget) return;
-
-                // Locked target (belongs to another device)
-                if (isLocked) return;
-
-                onSelectTarget(target.id);
-              },
-            }}
+  dblclick: () => {
+    if (onSelectTarget && !isLocked) {
+      onSelectTarget(target.id);
+    }
+  },
+}}
           >
             <Popup>
-              <strong>{target.name}</strong>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                  minWidth: 140,
+                }}
+              >
+                <div style={{ fontSize: 13, opacity: 0.8 }}>
+                  Delete target?
+                </div>
 
-              <div style={{ marginTop: 6 }}>
-                {isSelected && "🎯 Assigned to this device"}
-                {!isSelected && isLocked && "🔒 Assigned to another device"}
-                {!isSelected && !isLocked && onSelectTarget && "Click to assign"}
-                {!onSelectTarget && "Target"}
+                <button
+                  style={{
+                    background: "#b91c1c",
+                    color: "white",
+                    border: "none",
+                    borderRadius: 6,
+                    padding: "6px",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => {
+                    if (
+                      onDeleteTarget &&
+                      window.confirm("Delete this target?")
+                    ) {
+                      onDeleteTarget(target.id);
+                    }
+                  }}
+                >
+                  🗑 Delete
+                </button>
               </div>
             </Popup>
           </Marker>
@@ -107,10 +121,8 @@ export default function TargetsLayer({
         <Marker
           position={[pendingPoint.lat, pendingPoint.lng]}
           icon={pendingTargetIcon}
-          interactive={false} // 👈 important: don't block map clicks
-        >
-          <Popup>Pending target</Popup>
-        </Marker>
+          interactive={false}
+        />
       )}
     </>
   );

@@ -232,18 +232,21 @@ export default function DevicesPage() {
     return;
   }
 
-  if (!selectedDevice) {
-    alert("Select a device first");
-    return;
-  }
 
   const { lat, lng } = pendingPoint; // ✅ TypeScript רגוע מכאן והלאה
+
+  const areaId = areas[0]?.id;
+
+  if (!areaId) {
+    alert("No area available");
+    return;
+  }
 
   const created = await createTarget({
     name: targetName || "New Target",
     latitude: lat,
     longitude: lng,
-    areaId: selectedDevice.areaId,
+    areaId,
   });
 
   setTargets((prev) => [...prev, created]);
@@ -319,6 +322,7 @@ const availableTargets = useMemo(() => {
   targets={targets}
   selectedTargetId={selectedDevice?.targetId}
   onSelectTarget={handleAssignTarget}
+  onDeleteTarget={handleDeleteTarget} // 👈 זה
   pendingPoint={isPlacingTarget ? pendingPoint : null} // 👈 זה הכול
 />
 
@@ -400,15 +404,6 @@ setRightPanelMode("CREATE_TARGET");
               {availableTargets.map((t) => (
                 <li key={t.id}>
                   {t.name}
-                  {selectedDevice && (
-                    <button
-                      onClick={() =>
-                        handleAssignTarget(t.id)
-                      }
-                    >
-                      🎯
-                    </button>
-                  )}
                   <button
                     onClick={() =>
                       handleDeleteTarget(t.id)
