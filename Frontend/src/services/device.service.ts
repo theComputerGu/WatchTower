@@ -61,14 +61,6 @@ export async function assignUsersToDevice(
   return res.data;
 }
 
-export async function getDeviceUsers(
-  deviceId: number
-): Promise<User[]> {
-  const res = await api.get<User[]>(
-    `/devices/${deviceId}/users`
-  );
-  return res.data;
-}
 
 
 
@@ -87,4 +79,31 @@ export async function createDevice(
 
 export async function deleteDevice(deviceId: number): Promise<void> {
   await api.delete(`/devices/${deviceId}`);
+}
+
+
+
+export async function removeDeviceUser(
+  deviceId: number,
+  userId: string
+): Promise<void> {
+  await api.delete(`/devices/${deviceId}/users/${userId}`);
+}
+
+export async function getDeviceUsers(
+  deviceId: number
+): Promise<User[]> {
+  const res = await api.get<User[]>(
+    `/devices/${deviceId}/users`
+  );
+  return res.data;
+}
+
+export async function assignDeviceUsers(
+  deviceId: number,
+  userIds: string[]
+): Promise<void> {
+  await api.post(`/devices/${deviceId}/users`, {
+    userIds,
+  });
 }

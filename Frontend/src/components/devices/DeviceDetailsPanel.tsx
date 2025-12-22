@@ -1,13 +1,10 @@
-import { useEffect, useState } from "react";
 
 import type { Device } from "../../models/Device";
 import type { Target } from "../../models/Target";
-import type { User } from "../../models/User";
 
-import { getDeviceUsers } from "../../services/device.service";
 
+import DeviceViewersSelector from "./DeviceViewersSelector";
 import DeviceTargetSelector from "./DeviceTargetSelector";
-import DeviceUsersSelector from "./DeviceUsersSelector";
 
 type Props = {
   device: Device;
@@ -26,15 +23,10 @@ export default function DeviceDetailsPanel({
   targets,
   onAssignTarget,
   onUnassignTarget,
-  onChangeUsers,
   onDelete,
   onBack, // 👈 זה מה שחסר
 }: Props) {
-  const [users, setUsers] = useState<User[]>([]);
 
-  useEffect(() => {
-    getDeviceUsers(device.id).then(setUsers);
-  }, [device.id]);
 
   return (
 
@@ -69,13 +61,12 @@ export default function DeviceDetailsPanel({
         onClear={onUnassignTarget}
       />
 
+
       <hr />
 
-      <DeviceUsersSelector
-        users={users}
-        selectedIds={device.userIds ?? []}
-        onChange={onChangeUsers}
-      />
+<h4>Viewers</h4>
+
+<DeviceViewersSelector deviceId={device.id} />
 
       <hr />
 
