@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Polygon } from "react-leaflet";
 
 import MapView from "../components/map/MapView";
 import RightPanel from "../components/map/RightPanel";
 import DevicesLayer from "../components/map/DevicesLayer";
 import AreasLayer from "../components/map/AreasLayer";
+import TargetsLayer from "../components/map/TargetsLayer";
 import DeviceDetailsPanel from "../components/devices/DeviceDetailsPanel";
 
 import {
@@ -13,17 +15,29 @@ import {
   toggleDeviceActive,
   assignUsersToDevice,
   createDevice,
-  deleteDevice, // 👈 חשוב
+  deleteDevice,
 } from "../services/device.service";
 
+import {
+  getTargets,
+  createTarget,
+  deleteTarget,
+} from "../services/target.service";
+
 import { getAreas } from "../services/area.service";
-import { getTargets } from "../services/target.service";
 import { getPlaces } from "../services/place.service";
 
 import type { Device } from "../models/Device";
 import type { Target } from "../models/Target";
 import type { Area } from "../models/Area";
 import type { PlaceResponse } from "../types/place.types";
+
+import { buildCone } from "../utils/geo";
+
+
+type PendingPoint = { lat: number; lng: number } | null;
+
+type RightPanelMode = "DEFAULT" | "CREATE_TARGET" | "DEVICE_DETAILS";
 
 export default function DevicesPage() {
   // ============================
@@ -33,121 +47,161 @@ export default function DevicesPage() {
   const [places, setPlaces] = useState<PlaceResponse[]>([]);
   const [devices, setDevices] = useState<Device[]>([]);
   const [targets, setTargets] = useState<Target[]>([]);
-  const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
+
+  const [selectedDevice, setSelectedDevice] =
+    useState<Device | null>(null);
+
+  const [rightPanelMode, setRightPanelMode] =
+    useState<RightPanelMode>("DEFAULT");
+
   const [loading, setLoading] = useState(true);
 
+  // ===== Target creation =====
+  const [isPlacingTarget, setIsPlacingTarget] =
+    useState(false);
+  const [pendingPoint, setPendingPoint] =
+    useState<PendingPoint>(null);
+  const [targetName, setTargetName] = useState("");
+
   // ============================
-  // Initial load
+  // Load data
   // ============================
   useEffect(() => {
     async function load() {
-      try {
-        const [areasData, placesData, devicesData, targetsData] =
-          await Promise.all([
-            getAreas(),
-            getPlaces(),
-            getDevices(),
-            getTargets(),
-          ]);
+      const [
+        areasData,
+        placesData,
+        devicesData,
+        targetsData,
+      ] = await Promise.all([
+        getAreas(),
+        getPlaces(),
+        getDevices(),
+        getTargets(),
+      ]);
 
-        setAreas(areasData);
-        setPlaces(placesData);
-        setDevices(devicesData);
-        setTargets(targetsData);
-      } catch (err) {
-        console.error("Failed to load devices page", err);
-      } finally {
-        setLoading(false);
-      }
+      setAreas(areasData);
+      setPlaces(placesData);
+      setDevices(devicesData);
+      setTargets(targetsData);
+      setLoading(false);
     }
 
     load();
   }, []);
 
   // ============================
-  // Select device from map
+  // Map click
+  // ============================
+  function handleMapClick(lat: number, lng: number) {
+  if (!isPlacingTarget) return;
+  setPendingPoint({ lat, lng });
+}
+
+
+  // ============================
+  // Device actions
   // ============================
   function handleSelectDevice(deviceId: number) {
-    const device = devices.find((d) => d.id === deviceId) || null;
+    const device =
+      devices.find((d) => d.id === deviceId) || null;
+
     setSelectedDevice(device);
+    setRightPanelMode("DEVICE_DETAILS");
   }
 
-  // ============================
-  // Assign target
-  // ============================
-  async function handleAssignTarget(targetId: number) {
-    if (!selectedDevice) return;
-
-    const updated = await assignTarget(selectedDevice.id, targetId);
-
-    setDevices((prev) =>
-      prev.map((d) => (d.id === updated.id ? updated : d))
-    );
-    setSelectedDevice(updated);
-  }
-
-  // ============================
-  // Unassign target
-  // ============================
-  async function handleUnassignTarget() {
-    if (!selectedDevice) return;
-
-    const updated = await unassignTarget(selectedDevice.id);
-
-    setDevices((prev) =>
-      prev.map((d) => (d.id === updated.id ? updated : d))
-    );
-    setSelectedDevice(updated);
-  }
-
-  // ============================
-  // Toggle active
-  // ============================
-  async function handleToggleActive(isActive: boolean) {
-    if (!selectedDevice) return;
-
-    const updated = await toggleDeviceActive(selectedDevice.id, isActive);
-
-    setDevices((prev) =>
-      prev.map((d) => (d.id === updated.id ? updated : d))
-    );
-    setSelectedDevice(updated);
-  }
-
-  // ============================
-  // Add device to place
-  // ============================
   async function handleAddDevice(
     placeId: number,
     type: "Camera" | "Radar"
   ) {
-    try {
-      const device = await createDevice(placeId, type);
+    const device = await createDevice(placeId, type);
 
-      setDevices((prev) => [...prev, device]);
+    setDevices((prev) => [...prev, device]);
+    setPlaces((prev) =>
+      prev.map((p) =>
+        p.id === placeId
+          ? {
+              ...p,
+              deviceId: device.id,
+              deviceType: device.type,
+            }
+          : p
+      )
+    );
 
-      setPlaces((prev) =>
-        prev.map((p) =>
-          p.id === placeId
-            ? {
-                ...p,
-                deviceId: device.id,
-                deviceType: device.type,
-              }
-            : p
-        )
-      );
-
-      setSelectedDevice(device);
-    } catch (err) {
-      console.error("Failed to create device", err);
-      alert("Failed to add device");
-    }
+    setSelectedDevice(device);
+    setRightPanelMode("DEVICE_DETAILS");
   }
 
-  // ============================
-  // Delete device
-  // ============================
+  async function handleAssignTarget(targetId: number) {
+    if (!selectedDevice) return;
+
+    const updated = await assignTarget(
+      selectedDevice.id,
+      targetId
+    );
+
+    setDevices((prev) =>
+      prev.map((d) =>
+        d.id === updated.id ? updated : d
+      )
+    );
+
+    setTargets((prev) =>
+      prev.map((t) =>
+        t.id === targetId
+          ? { ...t, deviceId: updated.id }
+          : t.deviceId === updated.id
+          ? { ...t, deviceId: null }
+          : t
+      )
+    );
+
+    setSelectedDevice(updated);
+  }
+
+  async function handleUnassignTarget() {
+    if (!selectedDevice) return;
+
+    const oldTargetId = selectedDevice.targetId;
+    const updated = await unassignTarget(selectedDevice.id);
+
+    setDevices((prev) =>
+      prev.map((d) =>
+        d.id === updated.id ? updated : d
+      )
+    );
+
+    if (oldTargetId) {
+      setTargets((prev) =>
+        prev.map((t) =>
+          t.id === oldTargetId
+            ? { ...t, deviceId: null }
+            : t
+        )
+      );
+    }
+
+    setSelectedDevice(updated);
+  }
+
+  async function handleToggleActive(isActive: boolean) {
+    if (!selectedDevice) return;
+
+    const updated = await toggleDeviceActive(
+      selectedDevice.id,
+      isActive
+    );
+
+    setDevices((prev) =>
+      prev.map((d) =>
+        d.id === updated.id ? updated : d
+      )
+    );
+
+    setSelectedDevice(updated);
+  }
+
   async function handleDeleteDevice() {
     if (!selectedDevice) return;
 
@@ -157,65 +211,200 @@ export default function DevicesPage() {
       prev.filter((d) => d.id !== selectedDevice.id)
     );
 
-    setPlaces((prev) =>
-      prev.map((p) =>
-        p.deviceId === selectedDevice.id
-          ? {
-              ...p,
-              deviceId: null,
-              deviceType: null,
-            }
-          : p
-      )
-    );
-
     setSelectedDevice(null);
+    setRightPanelMode("DEFAULT");
   }
 
-  // ============================
-  // Change users
-  // ============================
   async function handleChangeUsers(userIds: string[]) {
     if (!selectedDevice) return;
-    await assignUsersToDevice(selectedDevice.id, userIds);
+    await assignUsersToDevice(
+      selectedDevice.id,
+      userIds
+    );
   }
+
+  // ============================
+  // Target actions
+  // ============================
+  async function handleCreateTarget() {
+   if (!pendingPoint) {
+    console.warn("No pending point");
+    return;
+  }
+
+  if (!selectedDevice) {
+    alert("Select a device first");
+    return;
+  }
+
+  const { lat, lng } = pendingPoint; // ✅ TypeScript רגוע מכאן והלאה
+
+  const created = await createTarget({
+    name: targetName || "New Target",
+    latitude: lat,
+    longitude: lng,
+    areaId: selectedDevice.areaId,
+  });
+
+  setTargets((prev) => [...prev, created]);
+
+  // reset
+  setIsPlacingTarget(false);
+  setPendingPoint(null);
+  setTargetName("");
+  setRightPanelMode("DEFAULT");
+}
+
+
+  async function handleDeleteTarget(targetId: number) {
+    await deleteTarget(targetId);
+
+    setTargets((prev) =>
+      prev.filter((t) => t.id !== targetId)
+    );
+
+    setDevices((prev) =>
+      prev.map((d) =>
+        d.targetId === targetId
+          ? { ...d, targetId: null }
+          : d
+      )
+    );
+  }
+
+  // ============================
+  // Pending cone
+  // ============================
+  const pendingCone = useMemo(() => {
+    if (!selectedDevice || !pendingPoint) return null;
+
+    return buildCone(
+      [selectedDevice.latitude, selectedDevice.longitude],
+      [pendingPoint.lat, pendingPoint.lng]
+    );
+  }, [selectedDevice, pendingPoint]);
 
   if (loading) return <div>Loading...</div>;
 
-  // ============================
-  // Render
-  // ============================
   return (
     <div className="page">
-      {/* ===== MAP ===== */}
-      <MapView>
-        {/* 🟦 Areas */}
-        <AreasLayer areas={areas} />
+      <MapView onMapClick={handleMapClick}>
+        <AreasLayer
+          areas={areas}
+          disableInteraction={isPlacingTarget}
+        />
 
-        {/* 📍 Places + Devices */}
         <DevicesLayer
           places={places}
           onSelectDevice={handleSelectDevice}
           onAddDevice={handleAddDevice}
         />
+
+        <TargetsLayer
+  targets={targets}
+  selectedTargetId={selectedDevice?.targetId}
+  onSelectTarget={handleAssignTarget}
+  pendingPoint={isPlacingTarget ? pendingPoint : null} // 👈 זה הכול
+/>
+
+        {pendingCone && (
+          <Polygon
+            positions={pendingCone as any}
+            pathOptions={{
+              color: "#60a5fa",
+              fillOpacity: 0.18,
+            }}
+          />
+        )}
       </MapView>
 
-      {/* ===== RIGHT PANEL ===== */}
-      <RightPanel title="Device Details">
-        {selectedDevice ? (
-          <DeviceDetailsPanel
-            device={selectedDevice}
-            targets={targets}
-            onAssignTarget={handleAssignTarget}
-            onUnassignTarget={handleUnassignTarget}
-            onToggleActive={handleToggleActive}
-            onChangeUsers={handleChangeUsers}
-            onDelete={handleDeleteDevice}
-          />
-        ) : (
-          <p style={{ opacity: 0.7 }}>
-            Select a device on the map
-          </p>
+      <RightPanel title="Control Panel">
+        {rightPanelMode === "CREATE_TARGET" && (
+          <section className="panel-section">
+            <h4>Create Target</h4>
+
+            <p>Click on map to place target</p>
+
+            <input
+              value={targetName}
+              onChange={(e) =>
+                setTargetName(e.target.value)
+              }
+              placeholder="Target name"
+            />
+
+            <button
+              disabled={!pendingPoint}
+              onClick={handleCreateTarget}
+            >
+              Create
+            </button>
+
+            <button
+              onClick={() => {
+                setIsPlacingTarget(false);
+                setPendingPoint(null);
+                setRightPanelMode("DEFAULT");
+              }}
+            >
+              Cancel
+            </button>
+          </section>
+        )}
+
+        {rightPanelMode === "DEVICE_DETAILS" &&
+          selectedDevice && (
+            <DeviceDetailsPanel
+  device={selectedDevice}
+  targets={targets}
+  onAssignTarget={handleAssignTarget}
+  onUnassignTarget={handleUnassignTarget}
+  onToggleActive={handleToggleActive}
+  onChangeUsers={handleChangeUsers}
+  onDelete={handleDeleteDevice}
+  onBack={() => setRightPanelMode("DEFAULT")} // 👈 זהו
+/>
+          )}
+
+        {rightPanelMode === "DEFAULT" && (
+          <section className="panel-section">
+            <h4>Targets</h4>
+
+            <button
+              onClick={() => {
+                setPendingPoint(null);      // 👈 חובה
+setTargetName("");          // 👈 מומלץ
+setIsPlacingTarget(true);
+setRightPanelMode("CREATE_TARGET");
+              }}
+            >
+              ➕ Add Target
+            </button>
+
+            <ul>
+              {targets.map((t) => (
+                <li key={t.id}>
+                  {t.name}
+                  {selectedDevice && (
+                    <button
+                      onClick={() =>
+                        handleAssignTarget(t.id)
+                      }
+                    >
+                      🎯
+                    </button>
+                  )}
+                  <button
+                    onClick={() =>
+                      handleDeleteTarget(t.id)
+                    }
+                  >
+                    🗑
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
       </RightPanel>
     </div>

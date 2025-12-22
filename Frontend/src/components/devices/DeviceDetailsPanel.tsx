@@ -9,16 +9,18 @@ import { getDeviceUsers } from "../../services/device.service";
 import DeviceTargetSelector from "./DeviceTargetSelector";
 import DeviceUsersSelector from "./DeviceUsersSelector";
 
-interface Props {
+type Props = {
   device: Device;
   targets: Target[];
 
-  onAssignTarget: (targetId: number) => Promise<void>;
-  onUnassignTarget: () => Promise<void>;
+  onAssignTarget: (targetId: number) => void;
+  onUnassignTarget: () => void;
+
   onToggleActive: (isActive: boolean) => Promise<void>;
   onChangeUsers: (userIds: string[]) => Promise<void>;
   onDelete: () => Promise<void>;
-}
+  onBack?: () => void; // 👈 חדש
+};
 
 export default function DeviceDetailsPanel({
   device,
@@ -28,34 +30,26 @@ export default function DeviceDetailsPanel({
   onToggleActive,
   onChangeUsers,
   onDelete,
+  onBack, // 👈 זה מה שחסר
 }: Props) {
-  // ============================
-  // Users state (local)
-  // ============================
   const [users, setUsers] = useState<User[]>([]);
-  const [loadingUsers, setLoadingUsers] = useState(false);
 
-  // ============================
-  // Load users for this device
-  // ============================
   useEffect(() => {
-    async function loadUsers() {
-      setLoadingUsers(true);
-      try {
-        const data = await getDeviceUsers(device.id);
-        setUsers(data);
-      } catch (err) {
-        console.error("Failed to load device users", err);
-      } finally {
-        setLoadingUsers(false);
-      }
-    }
-
-    loadUsers();
+    getDeviceUsers(device.id).then(setUsers);
   }, [device.id]);
 
   return (
+
+    
     <div>
+      {onBack && (
+      <button
+        style={{ marginBottom: 12 }}
+        onClick={onBack}
+      >
+        ← Back
+      </button>
+    )}
       <h4>Device #{device.id}</h4>
 
       <p>
@@ -67,18 +61,9 @@ export default function DeviceDetailsPanel({
         {device.isActive ? "🟢 Active" : "⚪ Inactive"}
       </p>
 
-      {device.orientationAngle != null && (
-        <p>
-          <strong>Orientation:</strong>{" "}
-          {device.orientationAngle.toFixed(1)}°
-        </p>
-      )}
-
       <hr />
 
-      {/* ===== Target ===== */}
       <label>Target</label>
-
       <DeviceTargetSelector
         targets={targets}
         selectedTargetId={device.targetId}
@@ -88,59 +73,36 @@ export default function DeviceDetailsPanel({
 
       <hr />
 
-      {/* ===== Users ===== */}
-      {loadingUsers ? (
-        <p style={{ opacity: 0.6 }}>Loading users...</p>
-      ) : (
-        <DeviceUsersSelector
-          users={users}
-          selectedIds={device.userIds ?? []}
-          onChange={onChangeUsers}
-        />
-      )}
+      <DeviceUsersSelector
+        users={users}
+        selectedIds={device.userIds ?? []}
+        onChange={onChangeUsers}
+      />
 
-      {/* ===== Activate / Deactivate ===== */}
       <button
-        style={{
-          marginTop: 12,
-          width: "100%",
-          background: device.isActive ? "#ef4444" : "#22c55e",
-          color: "white",
-          border: "none",
-          borderRadius: 8,
-          padding: "8px",
-          cursor: "pointer",
-        }}
-        onClick={() => onToggleActive(!device.isActive)}
+        style={{ marginTop: 12 }}
+        onClick={() =>
+          onToggleActive(!device.isActive)
+        }
       >
         {device.isActive ? "Deactivate" : "Activate"}
       </button>
 
       <hr />
 
-      {/* ===== Delete ===== */}
       <button
-        style={{
-          marginTop: 12,
-          width: "100%",
-          background: "#b91c1c",
-          color: "white",
-          border: "none",
-          borderRadius: 8,
-          padding: "8px",
-          cursor: "pointer",
-        }}
+        style={{ background: "#b91c1c", color: "white" }}
         onClick={() => {
           if (
             window.confirm(
-              "Are you sure you want to delete this device?"
+              "Delete this device?"
             )
           ) {
             onDelete();
           }
         }}
       >
-        🗑️ Delete Device
+        🗑 Delete Device
       </button>
     </div>
   );
