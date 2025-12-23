@@ -8,6 +8,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Text.Json.Serialization;
 using Backend.Middleware;
+using Backend.Repositories.Interfaces;
+using Backend.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,6 +61,11 @@ builder.Services.AddScoped<IPlaceService, PlaceService>();
 builder.Services.AddScoped<IDeviceService, DeviceService>();
 builder.Services.AddScoped<ITargetService, TargetService>();
 builder.Services.AddScoped<IMapService, MapService>();
+builder.Services.AddScoped<IDeviceRepository, DeviceRepository>();
+builder.Services.AddScoped<IAreaRepository, AreaRepository>();
+builder.Services.AddScoped<IPlaceRepository, PlaceRepository>();
+builder.Services.AddScoped<ITargetRepository, TargetRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 //conection to front:
 builder.Services.AddCors(options =>
