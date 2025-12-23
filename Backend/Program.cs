@@ -58,6 +58,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPlaceService, PlaceService>();
 builder.Services.AddScoped<IDeviceService, DeviceService>();
 builder.Services.AddScoped<ITargetService, TargetService>();
+builder.Services.AddScoped<IMapService, MapService>();
 
 //conection to front:
 builder.Services.AddCors(options =>

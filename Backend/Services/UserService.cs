@@ -103,38 +103,31 @@ namespace Backend.Services
 
 
         public async Task<List<UserSimpleResponse>> GetUsersInMyAreasAsync(Guid currentUserId)
-{
-    var admin = await _context.Users
-        .Include(u => u.ManagedAreas)
-        .FirstOrDefaultAsync(u => u.Id == currentUserId);
-
-    if (admin == null)
-        throw new Exception("User not found");
-
-    if (admin.Role != UserRole.AREA_ADMIN)
-        throw new UnauthorizedAccessException();
-
-    var areaIds = admin.ManagedAreas.Select(a => a.Id).ToList();
-
-    var users = await _context.Users
-        .Where(u =>
-            u.Role == UserRole.USER &&
-            u.DeviceUsers.Any(du =>
-                areaIds.Contains(du.Device.AreaId)))
-        .Select(u => new UserSimpleResponse
         {
-            Id = u.Id,
-            Username = u.Username,
-            Email = u.Email,
-            Role = u.Role
-        })
-        .Distinct()
-        .AsNoTracking()
-        .ToListAsync();
+            var admin = await _context.Users
+                .Include(u => u.ManagedAreas)
+                .FirstOrDefaultAsync(u => u.Id == currentUserId);
 
-    return users;
-}
+            if (admin == null)
+                throw new Exception("User not found");
 
+            if (admin.Role != UserRole.AREA_ADMIN)
+                throw new UnauthorizedAccessException();
+
+            var users = await _context.Users
+                .Where(u => u.Role == UserRole.USER)
+                .Select(u => new UserSimpleResponse
+                {
+                    Id = u.Id,
+                    Username = u.Username,
+                    Email = u.Email,
+                    Role = u.Role.ToString()
+                })
+                .AsNoTracking()
+                .ToListAsync();
+
+            return users;
+        }
 
     }
 }

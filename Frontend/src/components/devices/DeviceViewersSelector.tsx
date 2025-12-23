@@ -39,7 +39,7 @@ export default function DeviceViewersSelector({ deviceId }: Props) {
           getDeviceUsers(deviceId),
         ]);
 
-        setAllUsers(users.filter((u: User) => u.role === "USER"));
+        setAllUsers(users);
         setViewers(deviceUsers);
       } catch (err) {
         console.error("Failed to load viewers", err);

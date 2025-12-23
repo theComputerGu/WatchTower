@@ -44,7 +44,7 @@ public class TargetService : ITargetService
 
     public async Task<TargetResponse> CreateAsync(CreateTargetRequest request, User currentUser)
     {
-        // הרשאות: AREA_ADMIN רק באזור שלו
+       
         if (currentUser.Role != UserRole.GLOBAL_ADMIN)
         {
             var myAreaId = currentUser.ManagedAreas.Single().Id;
@@ -121,7 +121,7 @@ public class TargetService : ITargetService
                 throw new UnauthorizedAccessException("Target not in your area");
         }
 
-        // אם יש Device שמצביע עליה – ננתק (כדי לא להיתקע על FK)
+    
         if (target.DeviceId != null)
         {
             var device = await _db.Devices.FirstOrDefaultAsync(d => d.Id == target.DeviceId.Value);
