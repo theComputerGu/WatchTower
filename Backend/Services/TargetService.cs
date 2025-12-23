@@ -16,6 +16,7 @@ public class TargetService : ITargetService
         _db = db;
     }
 
+    //get all the targets that  the user ca nsee - mabey nothing
     public async Task<List<TargetResponse>> GetTargetsForUserAsync(User currentUser, int? areaId = null)
     {
         IQueryable<Target> q = _db.Targets.AsNoTracking();
@@ -42,6 +43,8 @@ public class TargetService : ITargetService
         }).ToListAsync();
     }
 
+
+    //create target
     public async Task<TargetResponse> CreateAsync(CreateTargetRequest request, User currentUser)
     {
        
@@ -80,6 +83,7 @@ public class TargetService : ITargetService
         };
     }
 
+    //update the target - not usinf it now in the front
     public async Task<TargetResponse> UpdateAsync(int targetId, UpdateTargetRequest request, User currentUser)
     {
         var target = await _db.Targets.FirstOrDefaultAsync(t => t.Id == targetId);
@@ -109,9 +113,12 @@ public class TargetService : ITargetService
         };
     }
 
+
+    //delete target
     public async Task DeleteAsync(int targetId, User currentUser)
     {
         var target = await _db.Targets.FirstOrDefaultAsync(t => t.Id == targetId);
+        
         if (target == null) return;
 
         if (currentUser.Role != UserRole.GLOBAL_ADMIN)

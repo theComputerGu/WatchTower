@@ -5,9 +5,5 @@ namespace Backend.Services.Interfaces;
 
 public interface IMapService
 {
-    Task<MapSnapshotResponse> GetMapAsync(
-        User user,
-        int? areaId,
-        string? deviceType,
-        string? status);
+    Task<MapSnapshotResponse> GetMapAsync(User user,int? areaId,string? deviceType,string? status);
 }
