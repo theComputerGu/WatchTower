@@ -133,8 +133,8 @@
 }
 
 .mrp-content {
-  flex: 1;        /* 🔥 תופס את כל הגובה האפשרי */
-  min-height: 0;  /* 🔥 חובה ב-flex */
+  flex: 1;        
+  min-height: 0; 
   overflow: hidden;
   display: flex;
   flex-direction: column;

@@ -16,22 +16,14 @@ public class MapService : IMapService
         _db = db;
     }
 
-    public async Task<MapSnapshotResponse> GetMapAsync(
-        User user,
-        int? areaId,
-        string? deviceType,
-        string? status)
+    public async Task<MapSnapshotResponse> GetMapAsync(User user,int? areaId,string? deviceType,string? status)
     {
-        // ========================
-        // Base queries
-        // ========================
+      
         var areasQuery = _db.Areas.AsQueryable();
         var devicesQuery = _db.Devices.AsQueryable();
         var targetsQuery = _db.Targets.AsQueryable();
 
-        // ========================
-        // Role-based scope
-        // ========================
+       
         if (user.Role == UserRole.AREA_ADMIN)
         {
             var areaIds = user.ManagedAreas.Select(a => a.Id).ToList();
@@ -58,9 +50,7 @@ public class MapService : IMapService
             targetsQuery = targetsQuery.Where(t => areaIds.Contains(t.AreaId));
         }
 
-        // ========================
-        // Filters
-        // ========================
+       
         if (areaId.HasValue)
         {
             devicesQuery = devicesQuery.Where(d => d.AreaId == areaId);
@@ -84,18 +74,13 @@ public class MapService : IMapService
             };
         }
 
-        // ========================
-        // Execute queries
-        // ========================
+       
         var areas = await areasQuery.ToListAsync();
         var devices = await devicesQuery
     .Include(d => d.Target)
     .ToListAsync();
         var targets = await targetsQuery.ToListAsync();
 
-        // ========================
-        // Build response
-        // ========================
         return new MapSnapshotResponse
         {
             Areas = areas.Select(a => new MapAreaDto
