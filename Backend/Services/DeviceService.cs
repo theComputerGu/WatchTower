@@ -56,7 +56,7 @@ public class DeviceService : IDeviceService
 
     public async Task<DeviceResponse> AssignTargetAsync(int deviceId, int targetId, User currentUser)
     {
-        // טרנזקציה כדי שלא נקבל מצב “חצי שיוך”
+    
         await using var tx = await _db.Database.BeginTransactionAsync();
 
         var device = await LoadDeviceWithAuth(deviceId, currentUser);
@@ -68,7 +68,7 @@ public class DeviceService : IDeviceService
         if (target == null)
             throw new KeyNotFoundException("Target not found");
 
-        // הרשאות: AREA_ADMIN רק באזור שלו
+    
         if (currentUser.Role != UserRole.GLOBAL_ADMIN)
         {
             var areaId = currentUser.ManagedAreas.Single().Id;
@@ -80,11 +80,11 @@ public class DeviceService : IDeviceService
                 throw new UnauthorizedAccessException("Target not in your area");
         }
 
-        // כלל הדומיין שלך: Target פנוי בלבד (ONE TO ONE)
+       
         if (target.DeviceId != null && target.DeviceId != device.Id)
             throw new InvalidOperationException("Target already has a device assigned");
 
-        // אם למכשיר כבר יש Target – ננתק קודם (הקשר הקודם מתנתק)
+     
         if (device.TargetId != null && device.TargetId != target.Id)
         {
             var oldTarget = await _db.Targets.FirstOrDefaultAsync(t => t.Id == device.TargetId.Value);
@@ -95,14 +95,14 @@ public class DeviceService : IDeviceService
             
         }
 
-        // קשר חדש
+        
         device.TargetId = target.Id;
         target.DeviceId = device.Id;
 
-        // אקטיב אוטומטי – אם יש Target
+      
         device.IsActive = true;
 
-        // זווית מתעדכנת “אל מול המטרה”
+      
         device.OrientationAngle = CalcAngle(device.Latitude, device.Longitude, target.Latitude, target.Longitude);
 
         await _db.SaveChangesAsync();
@@ -126,7 +126,7 @@ public class DeviceService : IDeviceService
             device.TargetId = null;
         }
 
-        // אם אין Target => לא פעיל (כמו שדרשת)
+      
         device.IsActive = false;
         device.OrientationAngle = null;
 
@@ -190,9 +190,6 @@ public class DeviceService : IDeviceService
     }
 
 
-    // ------------------------
-    // Helpers
-    // ------------------------
 
     private async Task<Device> LoadDeviceWithAuth(int deviceId, User currentUser)
     {
@@ -235,7 +232,7 @@ public class DeviceService : IDeviceService
         };
     }
 
-    // חישוב זווית פשוט (מעלות) בין נקודה לנקודה
+
     private static double CalcAngle(double fromLat, double fromLon, double toLat, double toLon)
     {
         var dy = toLat - fromLat;
@@ -250,7 +247,7 @@ public class DeviceService : IDeviceService
     int deviceId,
     User currentUser)
     {
-        // בדיקת הרשאות על המכשיר
+   
         _ = await LoadDeviceWithAuth(deviceId, currentUser);
 
         return await _db.DeviceUsers
@@ -274,7 +271,7 @@ public class DeviceService : IDeviceService
     if (place == null)
         throw new InvalidOperationException("Place not found");
 
-    // הרשאות
+
     if (currentUser.Role != UserRole.GLOBAL_ADMIN)
     {
         var areaId = currentUser.ManagedAreas.Single().Id;
