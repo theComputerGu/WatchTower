@@ -49,35 +49,35 @@ role-based authorization, spatial modeling, and a clean interactive UI.
 
 ### 🗺️ Main Map
 <p align="center">
-  <img src="Desighn/screenshots/five.png" width="900" />
+  <img src="Design/screenshots/five.png" width="900" />
   <br/>
   <i>Main interactive map — polygons, device markers and targets.</i>
 </p>
 
 ### 🧱 Area Management (Admin)
 <p align="center">
-  <img src="Desighn/screenshots/first.png" width="900" />
+  <img src="Design/screenshots/first.png" width="900" />
   <br/>
   <i>Create/edit/delete areas and draw polygons directly on the map.</i>
 </p>
 
 ### 📷 Devices (Cameras / Radars)
 <p align="center">
-  <img src="Desighn/screenshots/forth.png" width="900" />
+  <img src="Design/screenshots/forth.png" width="900" />
   <br/>
   <i>Deploy devices, assign targets, and control active status.</i>
 </p>
 
 ### 👥 Users & Permissions
 <p align="center">
-  <img src="Desighn/screenshots/third.png" width="900" />
+  <img src="Design/screenshots/third.png" width="900" />
   <br/>
   <i>Assign roles and restrict visibility by user and by area.</i>
 </p>
 
 > Tip: Add a short demo GIF:
 <p align="center">
-  <img src="Desighn/screenshots/מסך שני.gif" width="900" />
+  <img src="Design/screenshots/מסך שני.gif" width="900" />
 </p>
 
 ---
