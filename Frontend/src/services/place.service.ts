@@ -21,7 +21,6 @@ export async function updatePlaceType(
 }
 
 
-// ✅ DELETE
 export async function deletePlace(placeId: number): Promise<void> {
   await api.delete(`/places/${placeId}`);
 }

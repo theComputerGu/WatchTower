@@ -1,4 +1,3 @@
-// src/services/user.service.ts
 import api from "./api";
 import type { User } from "../models/User";
 
@@ -15,7 +14,6 @@ export async function updateUser(
     role: data.role,
   };
 
-  // שולחים areaId רק אם קיים
   if (data.areaId !== undefined) {
     payload.areaId = data.areaId;
   }

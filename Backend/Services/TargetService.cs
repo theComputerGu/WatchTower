@@ -12,9 +12,7 @@ public class TargetService : ITargetService
     private readonly ITargetRepository _targets;
     private readonly IDeviceRepository _devices;
 
-    public TargetService(
-        ITargetRepository targets,
-        IDeviceRepository devices)
+    public TargetService(ITargetRepository targets,IDeviceRepository devices)
     {
         _targets = targets;
         _devices = devices;

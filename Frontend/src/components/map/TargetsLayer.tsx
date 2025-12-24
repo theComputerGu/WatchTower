@@ -12,9 +12,7 @@ type Props = {
   pendingPoint?: PendingPoint;
 };
 
-// =======================
-// Icons
-// =======================
+
 
 const targetIcon = new L.Icon({
   iconUrl: "/target.svg",
@@ -40,20 +38,17 @@ const pendingTargetIcon = new L.Icon({
   iconAnchor: [14, 28],
 });
 
-// =======================
-// Component
-// =======================
+
 
 export default function TargetsLayer({
   targets,
   selectedTargetId,
   onSelectTarget,
-  onDeleteTarget,
   pendingPoint,
 }: Props) {
   return (
     <>
-      {/* ===== Existing targets ===== */}
+      {/*Existing targets*/}
       {targets.map((target) => {
         const isSelected = target.id === selectedTargetId;
         const isLocked = !!target.deviceId && !isSelected;
@@ -87,36 +82,16 @@ export default function TargetsLayer({
                 }}
               >
                 <div style={{ fontSize: 13, opacity: 0.8 }}>
-                  Delete target?
+                  {target.name}
                 </div>
 
-                <button
-                  style={{
-                    background: "#b91c1c",
-                    color: "white",
-                    border: "none",
-                    borderRadius: 6,
-                    padding: "6px",
-                    cursor: "pointer",
-                  }}
-                  onClick={() => {
-                    if (
-                      onDeleteTarget &&
-                      window.confirm("Delete this target?")
-                    ) {
-                      onDeleteTarget(target.id);
-                    }
-                  }}
-                >
-                  🗑 Delete
-                </button>
               </div>
             </Popup>
           </Marker>
         );
       })}
 
-      {/* ===== Pending target marker ===== */}
+      {/*Pending target marker*/}
       {pendingPoint && (
         <Marker
           position={[pendingPoint.lat, pendingPoint.lng]}

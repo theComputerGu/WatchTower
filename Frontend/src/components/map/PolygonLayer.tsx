@@ -2,7 +2,7 @@ import { Polygon, Popup } from "react-leaflet";
 import type { Area } from "../../models/Area";
 import type { LeafletMouseEvent } from "leaflet";
 
-// GeoJSON → Leaflet LatLng[]
+//leaflet stores the cordinations oposite that GEOJSON so converting:
 function geoJsonToLatLngs(geoJson: string): [number, number][] {
   const parsed = JSON.parse(geoJson);
   const coordinates = parsed.geometry.coordinates[0];
@@ -12,10 +12,14 @@ function geoJsonToLatLngs(geoJson: string): [number, number][] {
   );
 }
 
+
+
 type Props = {
   areas: Area[];
-  interactive?: boolean; // 👈 חדש
+  interactive?: boolean;
 };
+
+
 
 const DEFAULT_STYLE = {
   color: "#2563eb",
@@ -24,12 +28,18 @@ const DEFAULT_STYLE = {
   fillOpacity: 0.25,
 };
 
+
+
 const HOVER_STYLE = {
   color: "#1d4ed8",
   weight: 3,
   fillColor: "#3b82f6",
   fillOpacity: 0.45,
 };
+
+
+
+
 
 export default function PolygonLayer({
   areas,
@@ -42,6 +52,10 @@ export default function PolygonLayer({
   function onMouseOut(e: LeafletMouseEvent) {
     e.target.setStyle(DEFAULT_STYLE);
   }
+
+
+
+  
 
   return (
     <>

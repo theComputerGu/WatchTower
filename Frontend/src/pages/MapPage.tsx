@@ -1,36 +1,36 @@
 import { useEffect, useMemo, useState } from "react";
 import "../assets/styles/mapPage.css";
-
 import MapView from "../components/map/MapView";
 import AreasLayer from "../components/map/AreasLayer";
 import DevicesLayer from "../components/map/DevicesLayer";
 import TargetsLayer from "../components/map/TargetsLayer";
 import MapRightPanel from "../components/map/MapRightPanel";
-
 import { getMapSnapshot } from "../services/map.service";
 import type { MapFilters, MapSnapshotResponse } from "../types/map.types";
 import type { Area } from "../models/Area";
 import type { Target } from "../models/Target";
 import type { PlaceResponse } from "../types/place.types";
 
-// אם יש לך DeviceDetailsPanel במפה - תוכל לחבר כאן
-// import DeviceDetailsPanel from "../components/devices/DeviceDetailsPanel";
-// import { createDevice } from "../services/device.service";
+
 
 export default function MapPage() {
+
+
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<MapFilters>({});
 
   const [snapshot, setSnapshot] = useState<MapSnapshotResponse | null>(null);
 
-  // UI states
   const [selectedDeviceId, setSelectedDeviceId] = useState<number | null>(null);
 
+
+  //every time that the filters changed we load the map again:
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
+
+  //getting the data from the server:
   async function load() {
     setLoading(true);
     const data = await getMapSnapshot(filters);
@@ -38,56 +38,55 @@ export default function MapPage() {
     setLoading(false);
   }
 
-  // ============ Adapter: Map devices -> PlaceResponse ============
+  //Adapter: Map devices by place response
   const places: PlaceResponse[] = useMemo(() => {
     if (!snapshot) return [];
 
     return snapshot.devices.map((d) => ({
-      // PlaceResponse shape (מה שיש אצלך ב-DevicesLayer)
-      id: d.id, // "virtual place id" - מספיק למפה
+
+      id: d.id,
       latitude: d.latitude,
       longitude: d.longitude,
       areaId: d.areaId,
-
       deviceId: d.id,
-      deviceType: d.type, // "Camera" | "Radar"
+      deviceType: d.type, 
       isActive: d.isActive,
-
-      // Cone needs target lat/lng
       targetLatitude: d.targetLatitude ?? null,
       targetLongitude: d.targetLongitude ?? null,
+
     })) as any;
   }, [snapshot]);
 
-  // ============ Areas / Targets typed ============
+
+  //get Areas:
   const areas: Area[] = useMemo(() => {
     if (!snapshot) return [];
     return snapshot.areas as any;
   }, [snapshot]);
 
+  //get targets:
   const targets: Target[] = useMemo(() => {
     if (!snapshot) return [];
     return snapshot.targets as any;
   }, [snapshot]);
 
+  //in order to user the area name in the right pannel:
   const simpleAreas = useMemo(
     () => (snapshot ? snapshot.areas.map((a) => ({ id: a.id, name: a.name })) : []),
     [snapshot]
   );
 
-  // ============ Events ============
+  // function that remember which device was chosen
   function onSelectDevice(deviceId: number) {
     setSelectedDeviceId(deviceId);
   }
 
-  async function onAddDevice(placeId: number, type: "Camera" | "Radar") {
-    // אם כבר יש לך זרימה להוספה דרך Places/Devices pages – תחבר פה.
-    // לדוגמה, אם createDevice דורש placeId+type:
-    // await createDevice({ placeId, type });
-    // await load();
 
+  async function onAddDevice(placeId: number, type: "Camera" | "Radar") {
     console.log("Add device at virtual place", placeId, type);
   }
+
+
 
   return (
     <div className="map-layout">
@@ -96,11 +95,11 @@ export default function MapPage() {
           {!loading && (
             <>
               <AreasLayer areas={areas} />
-              <DevicesLayer
-                places={places}
-                onSelectDevice={onSelectDevice}
-                onAddDevice={onAddDevice}
-              />
+                <DevicesLayer
+                  places={places}
+                  onSelectDevice={onSelectDevice}
+                  onAddDevice={onAddDevice}
+                />
               <TargetsLayer targets={targets} />
             </>
           )}
@@ -113,15 +112,6 @@ export default function MapPage() {
         onChangeFilters={setFilters}
         areas={simpleAreas}
       />
-
-      {/* אם יש לך DeviceDetailsPanel:
-          {selectedDeviceId && (
-            <DeviceDetailsPanel
-              deviceId={selectedDeviceId}
-              onClose={() => setSelectedDeviceId(null)}
-            />
-          )}
-      */}
     </div>
   );
 }

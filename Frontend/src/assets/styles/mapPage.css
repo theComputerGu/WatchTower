@@ -1,5 +1,5 @@
 .map-layout {
-  height: calc(100vh - 64px); /* 🔥 גובה ה-TopBar */
+  height: calc(100vh - 64px);
   display: flex;
   background: radial-gradient(circle at top, #0f172a, #020617);
   color: #e5e7eb;
@@ -116,9 +116,9 @@
 
 
 .mrp-content {
-  flex: 1;              /* תופס את כל הגובה הזמין */
-  min-height: 0;        /* קריטי ל-flex */
-  overflow: hidden;     /* אין גלילה */
+  flex: 1;            
+  min-height: 0;      
+  overflow: hidden; 
   display: flex;
   flex-direction: column;
   gap: 10px;

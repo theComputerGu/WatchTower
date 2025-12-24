@@ -3,11 +3,7 @@ import type { Area } from "../../models/Area";
 
 type Props = {
   areas: Area[];
-  /**
-   * When true:
-   * - Polygons are NOT interactive
-   * - Clicks pass through to the map (used for Target placing)
-   */
+  //for popup
   disableInteraction?: boolean;
 };
 
@@ -18,15 +14,17 @@ export default function AreasLayer({
   return (
     <>
       {areas.flatMap((area) => {
+
+        //store the geometry object
         let geometries: any[] = [];
 
         try {
+          //turning y db string to JSON object
           const geo = JSON.parse(area.polygonGeoJson);
 
-          // =========================
-          // Normalize GeoJSON
-          // =========================
+          // the geo object can come with plenty types
           if (geo.type === "FeatureCollection") {
+            //go over objects and thaking just the fwatures
             geometries = geo.features.map((f: any) => f.geometry);
           } else if (geo.type === "Feature") {
             geometries = [geo.geometry];
@@ -34,16 +32,15 @@ export default function AreasLayer({
             geometries = [geo];
           }
         } catch {
-          // Invalid GeoJSON → skip this area
           return [];
         }
 
-        // =========================
-        // Render geometries
-        // =========================
+       
         return geometries.flatMap((g, idx) => {
-          // ---------- Polygon ----------
+          
+          //if its just polygon
           if (g.type === "Polygon") {
+            //saving it reverse
             const coords = g.coordinates[0].map(
               ([lng, lat]: [number, number]) => [lat, lng]
             );
@@ -52,7 +49,7 @@ export default function AreasLayer({
               <Polygon
                 key={`${area.id}-polygon-${idx}`}
                 positions={coords}
-                interactive={!disableInteraction} // 🔥 critical
+                interactive={!disableInteraction}
                 pathOptions={{
                   color: "#38bdf8",
                   weight: 2,
@@ -68,7 +65,7 @@ export default function AreasLayer({
             );
           }
 
-          // ---------- MultiPolygon ----------
+          //iterations on each polygon:
           if (g.type === "MultiPolygon") {
             return g.coordinates.map(
               (poly: any, i: number) => (
@@ -77,7 +74,7 @@ export default function AreasLayer({
                   positions={poly[0].map(
                     ([lng, lat]: [number, number]) => [lat, lng]
                   )}
-                  interactive={!disableInteraction} // 🔥 critical
+                  interactive={!disableInteraction}
                   pathOptions={{
                     color: "#38bdf8",
                     weight: 2,

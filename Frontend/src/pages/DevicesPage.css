@@ -1,0 +1,16 @@
+.devices-layout {
+  display: flex;
+  height: 92vh;       
+  width: 100%;
+  overflow: hidden;
+}
+
+.devices-layout > .map-view {
+  flex: 1;             
+}
+
+.devices-layout > .right-panel {
+  width: 380px;        
+  height: 100vh;       
+  overflow-y: auto;     
+}

@@ -1,37 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
 import { Polygon } from "react-leaflet";
-
 import MapView from "../components/map/MapView";
 import RightPanel from "../components/map/RightPanel";
 import DevicesLayer from "../components/map/DevicesLayer";
 import AreasLayer from "../components/map/AreasLayer";
 import TargetsLayer from "../components/map/TargetsLayer";
 import DeviceDetailsPanel from "../components/devices/DeviceDetailsPanel";
-
-import {
-  getDevices,
-  assignTarget,
-  unassignTarget,
-  assignUsersToDevice,
-  createDevice,
-  deleteDevice,
-} from "../services/device.service";
-
-import {
-  getTargets,
-  createTarget,
-  deleteTarget,
-} from "../services/target.service";
-
+import {getDevices,assignTarget,unassignTarget,assignUsersToDevice,createDevice,deleteDevice,} from "../services/device.service";
+import {getTargets,createTarget,deleteTarget,} from "../services/target.service";
 import { getAreas } from "../services/area.service";
 import { getPlaces } from "../services/place.service";
-
 import type { Device } from "../models/Device";
 import type { Target } from "../models/Target";
 import type { Area } from "../models/Area";
 import type { PlaceResponse } from "../types/place.types";
-
 import { buildCone } from "../utils/geo";
+import "./DevicesPage.css";
 
 
 type PendingPoint = { lat: number; lng: number } | null;
@@ -39,32 +23,22 @@ type PendingPoint = { lat: number; lng: number } | null;
 type RightPanelMode = "DEFAULT" | "CREATE_TARGET" | "DEVICE_DETAILS";
 
 export default function DevicesPage() {
-  // ============================
-  // State
-  // ============================
+
+
   const [areas, setAreas] = useState<Area[]>([]);
   const [places, setPlaces] = useState<PlaceResponse[]>([]);
   const [devices, setDevices] = useState<Device[]>([]);
   const [targets, setTargets] = useState<Target[]>([]);
-
-  const [selectedDevice, setSelectedDevice] =
-    useState<Device | null>(null);
-
-  const [rightPanelMode, setRightPanelMode] =
-    useState<RightPanelMode>("DEFAULT");
-
+  const [selectedDevice, setSelectedDevice] =useState<Device | null>(null);
+  const [rightPanelMode, setRightPanelMode] =useState<RightPanelMode>("DEFAULT");
   const [loading, setLoading] = useState(true);
-
-  // ===== Target creation =====
-  const [isPlacingTarget, setIsPlacingTarget] =
-    useState(false);
-  const [pendingPoint, setPendingPoint] =
-    useState<PendingPoint>(null);
+  const [isPlacingTarget, setIsPlacingTarget] =useState(false);
+  const [pendingPoint, setPendingPoint] =useState<PendingPoint>(null);
   const [targetName, setTargetName] = useState("");
 
-  // ============================
-  // Load data
-  // ============================
+
+
+
   useEffect(() => {
     async function load() {
       const [
@@ -89,18 +63,19 @@ export default function DevicesPage() {
     load();
   }, []);
 
-  // ============================
-  // Map click
-  // ============================
+
+
+
+
+
   function handleMapClick(lat: number, lng: number) {
   if (!isPlacingTarget) return;
   setPendingPoint({ lat, lng });
-}
+  }
 
 
-  // ============================
-  // Device actions
-  // ============================
+
+
   function handleSelectDevice(deviceId: number) {
     const device =
       devices.find((d) => d.id === deviceId) || null;
@@ -108,6 +83,9 @@ export default function DevicesPage() {
     setSelectedDevice(device);
     setRightPanelMode("DEVICE_DETAILS");
   }
+
+
+
 
   async function handleAddDevice(
     placeId: number,
@@ -131,6 +109,11 @@ export default function DevicesPage() {
     setSelectedDevice(device);
     setRightPanelMode("DEVICE_DETAILS");
   }
+
+
+
+
+
 
   async function handleAssignTarget(targetId: number) {
     if (!selectedDevice) return;
@@ -159,6 +142,11 @@ export default function DevicesPage() {
     setSelectedDevice(updated);
   }
 
+
+
+
+
+  //disconnect the target from the device
   async function handleUnassignTarget() {
     if (!selectedDevice) return;
 
@@ -185,19 +173,17 @@ export default function DevicesPage() {
   }
 
 
+
+
+
   async function handleDeleteDevice() {
   if (!selectedDevice) return;
-
   const deletedDeviceId = selectedDevice.id;
-
   await deleteDevice(deletedDeviceId);
-
-  // 🔥 1. הסרה מ-devices
   setDevices((prev) =>
     prev.filter((d) => d.id !== deletedDeviceId)
   );
 
-  // 🔥 2. ניתוק מה-place (זה היה חסר!)
   setPlaces((prev) =>
     prev.map((p) =>
       p.deviceId === deletedDeviceId
@@ -209,11 +195,13 @@ export default function DevicesPage() {
         : p
     )
   );
-
-  // 🔥 3. ניקוי UI
   setSelectedDevice(null);
   setRightPanelMode("DEFAULT");
 }
+
+
+
+
 
 
   async function handleChangeUsers(userIds: string[]) {
@@ -224,17 +212,16 @@ export default function DevicesPage() {
     );
   }
 
-  // ============================
-  // Target actions
-  // ============================
+
+
+
+
   async function handleCreateTarget() {
    if (!pendingPoint) {
     console.warn("No pending point");
     return;
   }
-
-
-  const { lat, lng } = pendingPoint; // ✅ TypeScript רגוע מכאן והלאה
+  const { lat, lng } = pendingPoint;
 
   const areaId = areas[0]?.id;
 
@@ -242,22 +229,22 @@ export default function DevicesPage() {
     alert("No area available");
     return;
   }
-
   const created = await createTarget({
     name: targetName || "New Target",
     latitude: lat,
     longitude: lng,
     areaId,
   });
-
   setTargets((prev) => [...prev, created]);
-
-  // reset
   setIsPlacingTarget(false);
   setPendingPoint(null);
   setTargetName("");
   setRightPanelMode("DEFAULT");
 }
+
+
+
+
 
 
   async function handleDeleteTarget(targetId: number) {
@@ -276,25 +263,9 @@ export default function DevicesPage() {
     );
   }
 
-  // ============================
-  // Pending cone
-  // ============================
-  const pendingCone = useMemo(() => {
-  if (
-    rightPanelMode !== "DEVICE_DETAILS" || // 👈 חשוב
-    !selectedDevice ||
-    !pendingPoint
-  ) {
-    return null;
-  }
-
-  return buildCone(
-    [selectedDevice.latitude, selectedDevice.longitude],
-    [pendingPoint.lat, pendingPoint.lng]
-  );
-}, [rightPanelMode, selectedDevice, pendingPoint]);
 
 
+//which targets the device can use:
 const availableTargets = useMemo(() => {
   return targets.filter(
     (t) =>
@@ -303,39 +274,84 @@ const availableTargets = useMemo(() => {
   );
 }, [targets, selectedDevice]);
 
+
+//takes the cordiants of device according to place
+const selectedPlace = useMemo(() => {
+  if (!selectedDevice) return null;
+
+  return places.find(
+    (p) => p.deviceId === selectedDevice.id
+  ) || null;
+}, [selectedDevice, places]);
+
+
+
+//ehich target is now - when i ckick on device:
+  const selectedTarget = useMemo(() => {
+    if (!selectedDevice) return null;
+
+    return targets.find(
+      (t) => t.id === selectedDevice.targetId
+    ) || null;
+  }, [selectedDevice, targets]);
+
+
+
+
+//angle that device look to target:
+  const fixedCone = useMemo(() => {
+  if (!selectedPlace || !selectedTarget) {
+    return null;
+  }
+
+  return buildCone(
+    [selectedPlace.latitude, selectedPlace.longitude],
+    [selectedTarget.latitude, selectedTarget.longitude]
+  );
+}, [selectedPlace, selectedTarget]);
+
+
+
+
+
   if (loading) return <div>Loading...</div>;
 
+
+
+
+
+
   return (
-    <div className="page">
+    <div className="devices-layout">
       <MapView onMapClick={handleMapClick}>
-        <AreasLayer
-          areas={areas}
-          disableInteraction={isPlacingTarget}
-        />
-
-        <DevicesLayer
-          places={places}
-          onSelectDevice={handleSelectDevice}
-          onAddDevice={handleAddDevice}
-        />
-
-        <TargetsLayer
-  targets={targets}
-  selectedTargetId={selectedDevice?.targetId}
-  onSelectTarget={handleAssignTarget}
-  onDeleteTarget={handleDeleteTarget} // 👈 זה
-  pendingPoint={isPlacingTarget ? pendingPoint : null} // 👈 זה הכול
-/>
-
-        {pendingCone && (
-          <Polygon
-            positions={pendingCone as any}
-            pathOptions={{
-              color: "#60a5fa",
-              fillOpacity: 0.18,
-            }}
+          <AreasLayer
+            areas={areas}
+            disableInteraction={isPlacingTarget}
           />
-        )}
+
+          <DevicesLayer
+            places={places}
+            onSelectDevice={handleSelectDevice}
+            onAddDevice={handleAddDevice}
+          />
+
+          <TargetsLayer
+            targets={targets}
+            selectedTargetId={selectedDevice?.targetId}
+            onSelectTarget={handleAssignTarget}
+            onDeleteTarget={handleDeleteTarget}
+            pendingPoint={isPlacingTarget ? pendingPoint : null}
+          />
+
+          {fixedCone && (
+          <Polygon
+              positions={fixedCone as any}
+              pathOptions={{
+                color: "#22c55e",    
+                fillOpacity: 0.25,
+              }}
+            />
+          )}
       </MapView>
 
       <RightPanel title="Control Panel">
@@ -375,26 +391,25 @@ const availableTargets = useMemo(() => {
         {rightPanelMode === "DEVICE_DETAILS" &&
           selectedDevice && (
             <DeviceDetailsPanel
-  device={selectedDevice}
-  targets={availableTargets}
-  onAssignTarget={handleAssignTarget}
-  onUnassignTarget={handleUnassignTarget}
-  onChangeUsers={handleChangeUsers}
-  onDelete={handleDeleteDevice}
-  onBack={() => setRightPanelMode("DEFAULT")} // 👈 זהו
-/>
+            device={selectedDevice}
+            targets={availableTargets}
+            onAssignTarget={handleAssignTarget}
+            onUnassignTarget={handleUnassignTarget}
+            onChangeUsers={handleChangeUsers}
+            onDelete={handleDeleteDevice}
+            onBack={() => setRightPanelMode("DEFAULT")}
+          />
           )}
 
         {rightPanelMode === "DEFAULT" && (
           <section className="panel-section">
             <h4>Targets</h4>
-
             <button
               onClick={() => {
-                setPendingPoint(null);      // 👈 חובה
-setTargetName("");          // 👈 מומלץ
-setIsPlacingTarget(true);
-setRightPanelMode("CREATE_TARGET");
+                setPendingPoint(null);
+                setTargetName("");      
+                setIsPlacingTarget(true);
+                setRightPanelMode("CREATE_TARGET");
               }}
             >
               ➕ Add Target

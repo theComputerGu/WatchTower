@@ -9,6 +9,7 @@ import "leaflet/dist/leaflet.css";
 import "leaflet-draw/dist/leaflet.draw.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
+  //stores + provider in order that i could use redux:
   <React.StrictMode>
     <Provider store={store}>
       <App />

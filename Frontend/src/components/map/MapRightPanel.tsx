@@ -7,18 +7,13 @@ type Props = {
   areas?: { id: number; name: string }[];
 };
 
-export default function MapRightPanel({
-  stats,
-  filters,
-  onChangeFilters,
-  areas = [],
-}: Props) {
+export default function MapRightPanel({stats,filters,onChangeFilters,areas = [],}: Props) {
+
   return (
     <aside className="map-right-panel">
-      {/* 🔥 CONTENT */}
       <div className="mrp-content">
 
-        {/* ===== STATS ===== */}
+
         <div className="mrp-stats">
           <div className="mrp-card">
             <div className="mrp-card-label">Areas</div>
@@ -44,68 +39,78 @@ export default function MapRightPanel({
 
         <div className="mrp-divider" />
 
-        {/* ===== FILTERS ===== */}
+
+
+
+        {/*filters:*/}
         <div className="mrp-section-title">Filters</div>
+          <label className="mrp-label">Area</label>
+          <select
+            className="mrp-select"
+            value={filters.areaId ?? ""}
+            onChange={(e) =>
+              onChangeFilters({
+                ...filters,
+                areaId: e.target.value ? Number(e.target.value) : undefined,
+              })
+            }
+          >
+            <option value="">All Areas</option>
+            {areas.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </select>
 
-        <label className="mrp-label">Area</label>
-        <select
-          className="mrp-select"
-          value={filters.areaId ?? ""}
-          onChange={(e) =>
-            onChangeFilters({
-              ...filters,
-              areaId: e.target.value ? Number(e.target.value) : undefined,
-            })
-          }
-        >
-          <option value="">All Areas</option>
-          {areas.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.name}
-            </option>
-          ))}
-        </select>
+          <label className="mrp-label">Device Type</label>
+          <select
+            className="mrp-select"
+            value={filters.deviceType ?? ""}
+            onChange={(e) =>
+              onChangeFilters({
+                ...filters,
+                deviceType: (e.target.value as any) || undefined,
+              })
+            }
+          >
+            <option value="">All</option>
+            <option value="Camera">Camera</option>
+            <option value="Radar">Radar</option>
+          </select>
 
-        <label className="mrp-label">Device Type</label>
-        <select
-          className="mrp-select"
-          value={filters.deviceType ?? ""}
-          onChange={(e) =>
-            onChangeFilters({
-              ...filters,
-              deviceType: (e.target.value as any) || undefined,
-            })
-          }
-        >
-          <option value="">All</option>
-          <option value="Camera">Camera</option>
-          <option value="Radar">Radar</option>
-        </select>
-
-        <label className="mrp-label">Status</label>
-        <select
-          className="mrp-select"
-          value={filters.status ?? ""}
-          onChange={(e) =>
-            onChangeFilters({
-              ...filters,
-              status: (e.target.value as any) || undefined,
-            })
-          }
-        >
-          <option value="">All</option>
-          <option value="active">Active</option>
-          <option value="offline">Offline</option>
-        </select>
+          <label className="mrp-label">Status</label>
+          <select
+            className="mrp-select"
+            value={filters.status ?? ""}
+            onChange={(e) =>
+              onChangeFilters({
+                ...filters,
+                status: (e.target.value as any) || undefined,
+              })
+            }
+          >
+            <option value="">All</option>
+            <option value="active">Active</option>
+            <option value="offline">Offline</option>
+          </select>
       </div>
 
-      {/* 🔥 RESET – תמיד גלוי */}
+
+
+
+
+
       <button
         className="mrp-reset"
         onClick={() => onChangeFilters({})}
       >
         Reset
       </button>
+
+
+
+
     </aside>
   );
 }

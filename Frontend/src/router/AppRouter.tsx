@@ -1,7 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import PageLayout from "../components/layout/PageLayout";
-
-// pages
 import HomePage from "../pages/HomePage";
 import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
@@ -11,16 +9,18 @@ import PlacesPage from "../pages/PlacesPage";
 import DevicesPage from "../pages/DevicesPage";
 import UsersPage from "../pages/UsersPage";
 
+
 export default function AppRouter() {
 
   return (
+
     <Routes>
-      {/* Public */}
+      {/* public pages */}
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
 
-      {/* App */}
+      {/* app pages */}
       <Route element={<PageLayout />}>
         <Route path="/map" element={<MapPage />} />
         <Route path="/areas" element={<AreasPage />} />
@@ -29,7 +29,7 @@ export default function AppRouter() {
         <Route path="/users" element={<UsersPage />} />
       </Route>
 
-      {/* Fallback */}
+      {/* if has error path */}
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );

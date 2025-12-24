@@ -7,6 +7,7 @@ import usersReducer from "./users/usersSlice";
 import "leaflet/dist/leaflet.css";
 import "leaflet-draw/dist/leaflet.draw.css";
 
+//the store of the redux:
 export const store = configureStore({
   reducer: {
     auth: authReducer,

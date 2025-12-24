@@ -2,6 +2,7 @@ import api from "./api";
 import type { MapFilters, MapSnapshotResponse } from "../types/map.types";
 
 
+//getting data for map page
 export async function getMapSnapshot(
   filters: MapFilters = {}
 ): Promise<MapSnapshotResponse> {

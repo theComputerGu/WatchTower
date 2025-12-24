@@ -7,11 +7,13 @@ type UsersState = {
   loading: boolean;
 };
 
+//in the start we dont have users:
 const initialState: UsersState = {
   items: [],
   loading: false,
 };
 
+//get the all users
 export const fetchUsers = createAsyncThunk(
   "users/fetchAll",
   async () => {

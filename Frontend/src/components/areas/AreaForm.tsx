@@ -13,11 +13,21 @@ type Props = {
   onCancel: () => void;
 };
 
+
+
 export default function AreaForm({ initial, onSave, onCancel }: Props) {
+
+  //name of the area
   const [name, setName] = useState(initial?.name ?? "");
+
+  //description of the area
   const [description, setDescription] = useState(initial?.description ?? "");
+
+  //JSON file that hold the polygon
   const [polygon, setPolygon] = useState(initial?.polygonGeoJson ?? "");
   const [saving, setSaving] = useState(false);
+
+
 
   async function handleSave() {
     setSaving(true);

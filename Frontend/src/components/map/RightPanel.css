@@ -1,8 +1,4 @@
-/* ===============================
-   Right Panel – WatchTower UI
-   =============================== */
 
-/* צבעים כלליים (אם כבר קיימים – זה לא ידרוס) */
 :root {
   --panel-bg: rgba(15, 23, 42, 0.88);
   --panel-border: rgba(148, 163, 184, 0.14);
@@ -17,7 +13,7 @@
   --radius: 16px;
 }
 
-/* ===== Panel container ===== */
+
 
 .right-panel {
   width: 360px;
@@ -37,7 +33,7 @@
     inset 0 0 0 1px rgba(255, 255, 255, 0.03);
 }
 
-/* ===== Header ===== */
+
 
 .right-panel-header {
   padding: 20px 22px;
@@ -52,7 +48,7 @@
   color: var(--text-main);
 }
 
-/* ===== Content ===== */
+
 
 .right-panel-content {
   flex: 1;
@@ -65,7 +61,7 @@
   overflow-y: auto;
 }
 
-/* ===== Sections inside panel ===== */
+
 
 .panel-section {
   background: rgba(255, 255, 255, 0.035);
@@ -78,7 +74,7 @@
   gap: 12px;
 }
 
-/* ===== Buttons ===== */
+
 
 .right-panel button {
   width: 100%;
@@ -110,7 +106,7 @@
   transform: translateY(0);
 }
 
-/* ===== Secondary / Cancel button ===== */
+
 
 .right-panel .btn-secondary {
   background: transparent;
@@ -123,7 +119,6 @@
   box-shadow: none;
 }
 
-/* ===== Scrollbar (יפה!) ===== */
 
 .right-panel-content::-webkit-scrollbar {
   width: 6px;
