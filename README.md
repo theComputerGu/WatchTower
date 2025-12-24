@@ -128,15 +128,11 @@ dotnet ef database update
 dotnet run
 ```
 
-### 🎨 Frontend Setup
-
-#### 📦 Install Dependencies
+### Frontend Setup
 
 ```bash
 cd Frontend
 npm install
-
-▶️ Run Development Server
 npm run dev
 
 
