@@ -10,7 +10,7 @@ using System.Text.Json.Serialization;
 using Backend.Middleware;
 using Backend.Repositories.Interfaces;
 using Backend.Repositories;
-
+using Backend.Repositories.Base;
 var builder = WebApplication.CreateBuilder(args);
 
 
@@ -67,6 +67,7 @@ builder.Services.AddScoped<IPlaceRepository, PlaceRepository>();
 builder.Services.AddScoped<ITargetRepository, TargetRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IDeviceUserRepository, DeviceUserRepository>();
+builder.Services.AddScoped(typeof(IBaseRepository<>), typeof(EfBaseRepository<>));
 
 //conection to front:
 builder.Services.AddCors(options =>

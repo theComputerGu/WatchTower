@@ -14,8 +14,6 @@ public class DeviceRepository : IDeviceRepository
         _db = db;
     }
 
-    public async Task<Device?> GetByIdAsync(int id)
-        => await _db.Devices.FirstOrDefaultAsync(d => d.Id == id);
 
     public async Task<Device?> GetByIdWithTargetAsync(int id)
         => await _db.Devices
@@ -26,16 +24,6 @@ public class DeviceRepository : IDeviceRepository
         => await _db.Devices
             .Where(d => d.AreaId == areaId)
             .ToListAsync();
-
-    public async Task AddAsync(Device device)
-        => await _db.Devices.AddAsync(device);
-
-    public async Task RemoveAsync(Device device)
-        => _db.Devices.Remove(device);
-
-    public async Task SaveAsync()
-        => await _db.SaveChangesAsync();
-
 
     public async Task<List<Device>> GetAllWithTargetsAsync()
     {

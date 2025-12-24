@@ -12,20 +12,26 @@ namespace Backend.Services;
 public class PlaceService : IPlaceService
 {
     private readonly IPlaceRepository _placeRepository;
+    private readonly IBaseRepository<Place> _placeBase;
     private readonly IDeviceRepository _deviceRepository;
+    private readonly IBaseRepository<Device> _deviceBase;
 
     public PlaceService(
         IPlaceRepository placeRepository,
-        IDeviceRepository deviceRepository)
+        IBaseRepository<Place> placeBase,
+        IDeviceRepository deviceRepository,
+        IBaseRepository<Device> deviceBase)
     {
         _placeRepository = placeRepository;
+        _placeBase = placeBase;
         _deviceRepository = deviceRepository;
+        _deviceBase = deviceBase;
     }
 
     //create place
     public async Task<PlaceResponse> CreatePlaceAsync(CreatePlaceRequest request,User currentUser)
     {
-        Area matchedArea;
+        Area? matchedArea;
 
         //serach of the polygon - global admin
         if (currentUser.Role == UserRole.GLOBAL_ADMIN)
@@ -64,7 +70,8 @@ public class PlaceService : IPlaceService
             AreaId = matchedArea.Id
         };
 
-        await _placeRepository.AddPlaceAsync(place);
+        await _placeBase.AddAsync(place);
+        await _placeBase.SaveChangesAsync();
 
         // creatintion of the device
         if (request.Type.HasValue && request.Type != PlaceType.None)
@@ -84,8 +91,8 @@ public class PlaceService : IPlaceService
                 IsActive = false
             };
 
-            await _deviceRepository.AddAsync(device);
-            await _deviceRepository.SaveAsync();
+            await _deviceBase.AddAsync(device);
+            await _deviceBase.SaveChangesAsync();
         }
 
         return new PlaceResponse
@@ -140,7 +147,7 @@ public class PlaceService : IPlaceService
         // if the device exist removing
         if (place.Device != null)
         {
-            await _deviceRepository.RemoveAsync(place.Device);
+            _deviceBase.Remove(place.Device);
         }
 
         if (newType != PlaceType.None)
@@ -160,10 +167,10 @@ public class PlaceService : IPlaceService
                 IsActive = false
             };
 
-            await _deviceRepository.AddAsync(device);
+            await _deviceBase.AddAsync(device);
         }
 
-        await _deviceRepository.SaveAsync();
+        await _deviceBase.SaveChangesAsync();
     }
 
     //delete place
@@ -183,9 +190,10 @@ public class PlaceService : IPlaceService
         }
 
         if (place.Device != null)
-            await _deviceRepository.RemoveAsync(place.Device);
+            _deviceBase.Remove(place.Device);
 
-        await _placeRepository.RemovePlaceAsync(place);
+        _placeBase.Remove(place);
+        await _placeBase.SaveChangesAsync();
     }
 
     //helper: geo

@@ -9,20 +9,26 @@ namespace Backend.Services;
 public class DeviceService : IDeviceService
 {
     private readonly IDeviceRepository _deviceRepo;
+    private readonly IBaseRepository<Device> _deviceBase;
     private readonly ITargetRepository _targetRepo;
+    private readonly IBaseRepository<Target> _targetBase;
     private readonly IPlaceRepository _placeRepo;
     private readonly IUserRepository _userRepo;
     private readonly IDeviceUserRepository _deviceUserRepo;
 
     public DeviceService(
         IDeviceRepository deviceRepo,
+        IBaseRepository<Device> deviceBase,
         ITargetRepository targetRepo,
+        IBaseRepository<Target> targetBase,
         IPlaceRepository placeRepo,
         IUserRepository userRepo,
         IDeviceUserRepository deviceUserRepo)
     {
         _deviceRepo = deviceRepo;
+        _deviceBase = deviceBase;
         _targetRepo = targetRepo;
+        _targetBase = targetBase;
         _placeRepo = placeRepo;
         _userRepo = userRepo;
         _deviceUserRepo = deviceUserRepo;
@@ -66,7 +72,7 @@ public class DeviceService : IDeviceService
         var device = await LoadDeviceWithAuth(deviceId, currentUser);
 
         device.Type = newType;
-        await _deviceRepo.SaveAsync();
+        await _deviceBase.SaveChangesAsync();
 
         return await ToResponse(device.Id);
     }
@@ -124,7 +130,7 @@ public class DeviceService : IDeviceService
         // disconnect old target from device (safety, even if FE does not allow it)
         if (device.TargetId != null && device.TargetId != target.Id)
         {
-            var oldTarget = await _targetRepo.GetByIdAsync(device.TargetId.Value);
+            var oldTarget = await _targetBase.GetByIdAsync(device.TargetId.Value);
 
             if (oldTarget != null)
                 oldTarget.DeviceId = null;
@@ -145,8 +151,8 @@ public class DeviceService : IDeviceService
             target.Latitude,
             target.Longitude);
 
-        await _deviceRepo.SaveAsync();
-        await _targetRepo.SaveChangesAsync();
+        await _deviceBase.SaveChangesAsync();
+        await _targetBase.SaveChangesAsync();
 
         return await ToResponse(device.Id);
     }
@@ -159,7 +165,7 @@ public class DeviceService : IDeviceService
 
         if (device.TargetId != null)
         {
-            var target = await _targetRepo.GetByIdAsync(device.TargetId.Value);
+            var target = await _targetBase.GetByIdAsync(device.TargetId.Value);
 
             if (target != null)
                 target.DeviceId = null;
@@ -170,8 +176,8 @@ public class DeviceService : IDeviceService
         device.IsActive = false;
         device.OrientationAngle = null;
 
-        await _deviceRepo.SaveAsync();
-        await _targetRepo.SaveChangesAsync();
+        await _deviceBase.SaveChangesAsync();
+        await _targetBase.SaveChangesAsync();
 
         return await ToResponse(device.Id);
     }
@@ -234,8 +240,8 @@ public class DeviceService : IDeviceService
             IsActive = false
         };
 
-        await _deviceRepo.AddAsync(device);
-        await _deviceRepo.SaveAsync();
+        await _deviceBase.AddAsync(device);
+        await _deviceBase.SaveChangesAsync();
 
         return await ToResponse(device.Id);
     }
@@ -252,15 +258,15 @@ public class DeviceService : IDeviceService
         // disconnect target
         if (device.TargetId != null)
         {
-            var target = await _targetRepo.GetByIdAsync(device.TargetId.Value);
+            var target = await _targetBase.GetByIdAsync(device.TargetId.Value);
 
             if (target != null)
                 target.DeviceId = null;
         }
 
-        await _deviceRepo.RemoveAsync(device);
-        await _deviceRepo.SaveAsync();
-        await _targetRepo.SaveChangesAsync();
+        _deviceBase.Remove(device);
+        await _deviceBase.SaveChangesAsync();
+        await _targetBase.SaveChangesAsync();
     }
 
 
@@ -283,9 +289,7 @@ public class DeviceService : IDeviceService
 
 
     // Get users for device
-    public async Task<List<User>> GetUsersForDeviceAsync(
-        int deviceId,
-        User currentUser)
+    public async Task<List<User>> GetUsersForDeviceAsync(int deviceId,User currentUser)
     {
         _ = await LoadDeviceWithAuth(deviceId, currentUser);
 
