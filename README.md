@@ -10,7 +10,7 @@
 <p align="center">
   <a href="#-features">Features</a> •
   <a href="#-screenshots">Screenshots</a> •
-  <a href="#-tech-stack">Tech Stack</a> •
+  <a href="#-tech-stack">TechStack</a> •
   <a href="#-security--permissions">Security</a> •
   <a href="#-run-locally">Run Locally</a>
 </p>
@@ -94,7 +94,7 @@ Permissions are enforced in:
 
 ---
 
-## 🏗️ Tech Stack
+## 🏗️ TechStack
 
 **Frontend**
 - React (SPA)
