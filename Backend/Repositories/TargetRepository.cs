@@ -19,29 +19,10 @@ public class TargetRepository : ITargetRepository
         return _db.Targets.AsQueryable();
     }
 
-    public async Task<Target?> GetByIdAsync(int id)
-    {
-        return await _db.Targets.FirstOrDefaultAsync(t => t.Id == id);
-    }
 
     public async Task<bool> AreaExistsAsync(int areaId)
     {
         return await _db.Areas.AnyAsync(a => a.Id == areaId);
-    }
-
-    public async Task AddAsync(Target target)
-    {
-        await _db.Targets.AddAsync(target);
-    }
-
-    public void Remove(Target target)
-    {
-        _db.Targets.Remove(target);
-    }
-
-    public async Task SaveChangesAsync()
-    {
-        await _db.SaveChangesAsync();
     }
 
     public async Task<Target?> GetWithDeviceAsync(int targetId)

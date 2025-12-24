@@ -10,12 +10,20 @@ namespace Backend.Services;
 public class TargetService : ITargetService
 {
     private readonly ITargetRepository _targets;
+    private readonly IBaseRepository<Target> _targetBase;
     private readonly IDeviceRepository _devices;
+    private readonly IBaseRepository<Device> _deviceBase;
 
-    public TargetService(ITargetRepository targets,IDeviceRepository devices)
+    public TargetService(
+        ITargetRepository targets,
+        IBaseRepository<Target> targetBase,
+        IDeviceRepository devices,
+        IBaseRepository<Device> deviceBase)
     {
         _targets = targets;
+        _targetBase = targetBase;
         _devices = devices;
+        _deviceBase = deviceBase;
     }
 
     //get all the targets that  the user ca nsee - mabey nothing
@@ -76,8 +84,8 @@ public class TargetService : ITargetService
             AreaId = request.AreaId
         };
 
-        await _targets.AddAsync(target);
-        await _targets.SaveChangesAsync();
+        await _targetBase.AddAsync(target);
+        await _targetBase.SaveChangesAsync();
 
         return new TargetResponse
         {
@@ -94,7 +102,7 @@ public class TargetService : ITargetService
     //update the target - not usinf it now in the front
     public async Task<TargetResponse> UpdateAsync(int targetId, UpdateTargetRequest request, User currentUser)
     {
-        var target = await _targets.GetByIdAsync(targetId);
+        var target = await _targetBase.GetByIdAsync(targetId);
         if (target == null) throw new KeyNotFoundException("Target not found");
 
         if (currentUser.Role == UserRole.USER)
@@ -110,7 +118,7 @@ public class TargetService : ITargetService
         target.Name = request.Name;
         target.Description = request.Description;
 
-        await _targets.SaveChangesAsync();
+        await _targetBase.SaveChangesAsync();
 
         return new TargetResponse
         {
@@ -128,7 +136,7 @@ public class TargetService : ITargetService
     //delete target
     public async Task DeleteAsync(int targetId, User currentUser)
     {
-        var target = await _targets.GetByIdAsync(targetId);
+        var target = await _targetBase.GetByIdAsync(targetId);
         if (target == null) return;
 
         if (currentUser.Role == UserRole.USER)
@@ -143,17 +151,17 @@ public class TargetService : ITargetService
 
         if (target.DeviceId != null)
         {
-            var device = await _devices.GetByIdAsync(target.DeviceId.Value);
+            var device = await _deviceBase.GetByIdAsync(target.DeviceId.Value);
             if (device != null)
             {
                 device.TargetId = null;
                 device.IsActive = false;
                 device.OrientationAngle = null;
-                await _devices.SaveAsync();
+                await _deviceBase.SaveChangesAsync();
             }
         }
 
-        _targets.Remove(target);
-        await _targets.SaveChangesAsync();
+        _targetBase.Remove(target);
+        await _targetBase.SaveChangesAsync();
     }
 }

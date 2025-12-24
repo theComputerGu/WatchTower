@@ -37,23 +37,6 @@ namespace Backend.Repositories
                 .ToListAsync();
         }
 
-        public async Task AddPlaceAsync(Place place)
-        {
-            _db.Places.Add(place);
-            await _db.SaveChangesAsync();
-        }
-
-        public async Task RemovePlaceAsync(Place place)
-        {
-            _db.Places.Remove(place);
-            await _db.SaveChangesAsync();
-        }
-
-        public async Task SaveChangesAsync()
-        {
-            await _db.SaveChangesAsync();
-        }
-
         public async Task<Place?> GetWithAreaAsync(int placeId)
         {
             return await _db.Places

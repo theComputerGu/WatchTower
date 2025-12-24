@@ -6,9 +6,6 @@ namespace Backend.Repositories.Interfaces
     {
         Task<List<Area>> GetAllAsync();
         Task<List<Area>> GetUnassignedAsync();
-        Task<Area?> GetByIdAsync(int areaId);
-        Task AddAsync(Area area);
-        Task RemoveAsync(Area area);
-        Task SaveChangesAsync();
+   
     }
 }
