@@ -11,7 +11,7 @@ import { getAreas, getMyAreas } from "../services/area.service";
 import { getPlaces, createPlace, deletePlace } from "../services/place.service";
 import type { Area } from "../models/Area";
 import type { PlaceResponse } from "../types/place.types";
-
+import "./PlacesPage.css";
 
 type PendingPoint = { lat: number; lng: number } | null;
 
@@ -123,7 +123,8 @@ export default function PlacesPage() {
 
 
   return (
-    <div className="page">
+    <div className="places-page">
+      <div className="places-map-wrapper">
       <MapView onMapClick={handleMapClick}>
         <PolygonLayer areas={areas} interactive={!isPlacing} />
 
@@ -141,6 +142,7 @@ export default function PlacesPage() {
           onDelete={handleDeletePlace}
         />
       </MapView>
+      </div>
 
       <RightPanel title="Add Place">
         <button
