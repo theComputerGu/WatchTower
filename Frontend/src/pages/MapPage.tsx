@@ -10,12 +10,12 @@ import type { MapFilters, MapSnapshotResponse } from "../types/map.types";
 import type { Area } from "../models/Area";
 import type { Target } from "../models/Target";
 import type { PlaceResponse } from "../types/place.types";
-
-
+import type { RootState } from "../store";
+import { useSelector } from "react-redux";
 
 export default function MapPage() {
 
-
+const currentUser = useSelector((state: RootState) => state.auth.user);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<MapFilters>({});
 
@@ -88,6 +88,32 @@ export default function MapPage() {
 
 
 
+  //just targets that user using
+  const visibleTargets: Target[] = useMemo(() => {
+  if (!snapshot) return [];
+
+  
+  if (currentUser?.role !== "USER") {
+    return snapshot.targets as any;
+  }
+
+  const targetIds = new Set<number>();
+
+  snapshot.devices.forEach((d) => {
+    if (d.targetId != null) {
+      targetIds.add(d.targetId);
+    }
+  });
+
+  return snapshot.targets.filter((t) =>
+    targetIds.has(t.id)
+  ) as any;
+}, [snapshot, currentUser]);
+
+
+
+
+
   return (
     <div className="map-layout">
       <div className="map-canvas">
@@ -99,8 +125,9 @@ export default function MapPage() {
                   places={places}
                   onSelectDevice={onSelectDevice}
                   onAddDevice={onAddDevice}
+                  interactive={false}
                 />
-              <TargetsLayer targets={targets} />
+              <TargetsLayer targets={visibleTargets} />
             </>
           )}
         </MapView>

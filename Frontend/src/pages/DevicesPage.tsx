@@ -333,6 +333,7 @@ const selectedPlace = useMemo(() => {
             places={places}
             onSelectDevice={handleSelectDevice}
             onAddDevice={handleAddDevice}
+            interactive
           />
 
           <TargetsLayer

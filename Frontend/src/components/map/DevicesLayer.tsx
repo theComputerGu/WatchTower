@@ -10,6 +10,7 @@ type Props = {
     placeId: number,
     type: "Camera" | "Radar"
   ) => void;
+  interactive?: boolean; 
 };
 
 
@@ -38,7 +39,7 @@ function getPlaceIcon(deviceType?: "Camera" | "Radar" | null) {
   return emptyPointIcon;
 }
 
-export default function DevicesLayer({places,onSelectDevice,onAddDevice,
+export default function DevicesLayer({places,onSelectDevice,onAddDevice,interactive = true, 
 }: Props) {
   return (
     <>
@@ -49,6 +50,7 @@ export default function DevicesLayer({places,onSelectDevice,onAddDevice,
           position={[place.latitude, place.longitude]}
           icon={getPlaceIcon(place.deviceType)}
         >
+          {interactive && (
           <Popup>
             <strong>Place #{place.id}</strong>
 
@@ -93,6 +95,7 @@ export default function DevicesLayer({places,onSelectDevice,onAddDevice,
               </button>
             )}
           </Popup>
+          )}
         </Marker>
       ))}
 
