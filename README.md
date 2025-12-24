@@ -120,6 +120,8 @@ Permissions are enforced in:
 
 ## 🧪 Run Locally
 
+---
+
 ### Backend
 ```bash
 cd Backend
