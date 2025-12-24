@@ -19,7 +19,7 @@ namespace Backend.Controllers
         }
 
         //get all areas
-       [HttpGet]
+        [HttpGet]
         [Authorize(Roles = "GLOBAL_ADMIN,AREA_ADMIN")]
         public async Task<ActionResult<List<AreaResponse>>> GetAll()
         {

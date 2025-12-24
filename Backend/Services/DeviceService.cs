@@ -1,35 +1,50 @@
-using Backend.Data;
 using Backend.DTOs.Devices;
 using Backend.Models;
 using Backend.Models.Enums;
+using Backend.Repositories.Interfaces;
 using Backend.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
-
 
 namespace Backend.Services;
 
 public class DeviceService : IDeviceService
 {
-    private readonly AppDbContext _db;
+    private readonly IDeviceRepository _deviceRepo;
+    private readonly ITargetRepository _targetRepo;
+    private readonly IPlaceRepository _placeRepo;
+    private readonly IUserRepository _userRepo;
+    private readonly IDeviceUserRepository _deviceUserRepo;
 
-    public DeviceService(AppDbContext db)
+    public DeviceService(
+        IDeviceRepository deviceRepo,
+        ITargetRepository targetRepo,
+        IPlaceRepository placeRepo,
+        IUserRepository userRepo,
+        IDeviceUserRepository deviceUserRepo)
     {
-        _db = db;
+        _deviceRepo = deviceRepo;
+        _targetRepo = targetRepo;
+        _placeRepo = placeRepo;
+        _userRepo = userRepo;
+        _deviceUserRepo = deviceUserRepo;
     }
 
+
+    // get the devices that relate to the current user
     public async Task<List<DeviceResponse>> GetDevicesForUserAsync(User currentUser)
     {
-        IQueryable<Device> q = _db.Devices
-            .AsNoTracking()
-            .Include(d => d.Target);
+        List<Device> devices;
 
-        if (currentUser.Role != UserRole.GLOBAL_ADMIN)
+        if (currentUser.Role == UserRole.GLOBAL_ADMIN)
+        {
+            devices = await _deviceRepo.GetAllWithTargetsAsync();
+        }
+        else
         {
             var areaId = currentUser.ManagedAreas.Single().Id;
-            q = q.Where(d => d.AreaId == areaId);
+            devices = await _deviceRepo.GetByAreaAsync(areaId);
         }
 
-        return await q.Select(d => new DeviceResponse
+        return devices.Select(d => new DeviceResponse
         {
             Id = d.Id,
             Type = d.Type,
@@ -41,34 +56,56 @@ public class DeviceService : IDeviceService
             OrientationAngle = d.OrientationAngle,
             TargetId = d.TargetId,
             TargetName = d.Target != null ? d.Target.Name : null
-        }).ToListAsync();
+        }).ToList();
     }
 
-    public async Task<DeviceResponse> UpdateDeviceTypeAsync(int deviceId, DeviceType newType, User currentUser)
+
+    //Update device type
+    public async Task<DeviceResponse> UpdateDeviceTypeAsync(int deviceId,DeviceType newType,User currentUser)
     {
         var device = await LoadDeviceWithAuth(deviceId, currentUser);
 
         device.Type = newType;
-        await _db.SaveChangesAsync();
+        await _deviceRepo.SaveAsync();
 
         return await ToResponse(device.Id);
     }
 
-    public async Task<DeviceResponse> AssignTargetAsync(int deviceId, int targetId, User currentUser)
-    {
-    
-        await using var tx = await _db.Database.BeginTransactionAsync();
 
+    // load the device and verify authorization
+    private async Task<Device> LoadDeviceWithAuth(
+        int deviceId,
+        User currentUser)
+    {
+        var device = await _deviceRepo.GetWithTargetAsync(deviceId);
+
+        if (device == null)
+            throw new KeyNotFoundException("Device not found");
+
+        // area admin / regular user can access only devices in his area
+        if (currentUser.Role != UserRole.GLOBAL_ADMIN)
+        {
+            var areaId = currentUser.ManagedAreas.Single().Id;
+
+            if (device.AreaId != areaId)
+                throw new UnauthorizedAccessException("Device not in your area");
+        }
+
+        return device;
+    }
+
+
+    // Assign target to device
+    public async Task<DeviceResponse> AssignTargetAsync(int deviceId,int targetId,User currentUser)
+    {
         var device = await LoadDeviceWithAuth(deviceId, currentUser);
 
-        var target = await _db.Targets
-            .Include(t => t.Device)
-            .FirstOrDefaultAsync(t => t.Id == targetId);
+        var target = await _targetRepo.GetWithDeviceAsync(targetId);
 
         if (target == null)
             throw new KeyNotFoundException("Target not found");
 
-    
+        // authorization check for non-global admin
         if (currentUser.Role != UserRole.GLOBAL_ADMIN)
         {
             var areaId = currentUser.ManagedAreas.Single().Id;
@@ -80,83 +117,83 @@ public class DeviceService : IDeviceService
                 throw new UnauthorizedAccessException("Target not in your area");
         }
 
-       
+        // target already assigned to another device
         if (target.DeviceId != null && target.DeviceId != device.Id)
             throw new InvalidOperationException("Target already has a device assigned");
 
-     
+        // disconnect old target from device (safety, even if FE does not allow it)
         if (device.TargetId != null && device.TargetId != target.Id)
         {
-            var oldTarget = await _db.Targets.FirstOrDefaultAsync(t => t.Id == device.TargetId.Value);
+            var oldTarget = await _targetRepo.GetByIdAsync(device.TargetId.Value);
+
             if (oldTarget != null)
                 oldTarget.DeviceId = null;
 
             device.TargetId = null;
-            
         }
 
-        
+        // connect target to device
         device.TargetId = target.Id;
         target.DeviceId = device.Id;
 
-      
         device.IsActive = true;
 
-      
-        device.OrientationAngle = CalcAngle(device.Latitude, device.Longitude, target.Latitude, target.Longitude);
+        // calculate orientation angle between device and target
+        device.OrientationAngle = CalcAngle(
+            device.Latitude,
+            device.Longitude,
+            target.Latitude,
+            target.Longitude);
 
-        await _db.SaveChangesAsync();
-        await tx.CommitAsync();
+        await _deviceRepo.SaveAsync();
+        await _targetRepo.SaveChangesAsync();
 
         return await ToResponse(device.Id);
     }
 
-    public async Task<DeviceResponse> UnassignTargetAsync(int deviceId, User currentUser)
-    {
-        await using var tx = await _db.Database.BeginTransactionAsync();
 
+    // Disconnect target from device
+    public async Task<DeviceResponse> UnassignTargetAsync(int deviceId,User currentUser)
+    {
         var device = await LoadDeviceWithAuth(deviceId, currentUser);
 
         if (device.TargetId != null)
         {
-            var target = await _db.Targets.FirstOrDefaultAsync(t => t.Id == device.TargetId.Value);
+            var target = await _targetRepo.GetByIdAsync(device.TargetId.Value);
+
             if (target != null)
                 target.DeviceId = null;
 
             device.TargetId = null;
         }
 
-      
         device.IsActive = false;
         device.OrientationAngle = null;
 
-        await _db.SaveChangesAsync();
-        await tx.CommitAsync();
+        await _deviceRepo.SaveAsync();
+        await _targetRepo.SaveChangesAsync();
 
         return await ToResponse(device.Id);
     }
 
-    public async Task AssignUsersAsync(
-        int deviceId,
-        List<Guid> userIds,
-        User currentUser)
+
+
+    // Assiggn users to device
+    public async Task AssignUsersAsync(int deviceId,List<Guid> userIds,User currentUser)
     {
-        var device = await LoadDeviceWithAuth(deviceId, currentUser);
+        _ = await LoadDeviceWithAuth(deviceId, currentUser);
 
-        var users = await _db.Users
-            .Where(u => userIds.Contains(u.Id))
-            .ToListAsync();
+        var users = await Task.WhenAll(
+            userIds.Select(id => _userRepo.GetByIdAsync(id)));
 
-        if (users.Count != userIds.Count)
+        if (users.Any(u => u == null))
             throw new InvalidOperationException("One or more users not found");
 
-        var existing = await _db.DeviceUsers
-            .Where(du => du.DeviceId == deviceId)
-            .Select(du => du.UserId)
-            .ToListAsync();
+        var existingUserIds = await _deviceUserRepo
+            .GetUserIdsForDeviceAsync(deviceId);
 
         var toAdd = userIds
-            .Where(uid => !existing.Contains(uid))
+            .Where(uid => !existingUserIds.Contains(uid))
             .Select(uid => new DeviceUser
             {
                 DeviceId = deviceId,
@@ -165,11 +202,69 @@ public class DeviceService : IDeviceService
             .ToList();
 
         if (toAdd.Count > 0)
-            _db.DeviceUsers.AddRange(toAdd);
+            await _deviceUserRepo.AddRangeAsync(toAdd);
 
-        await _db.SaveChangesAsync();
+        await _deviceUserRepo.SaveChangesAsync();
     }
 
+
+    //Create Device
+    public async Task<DeviceResponse> CreateAsync(CreateDeviceRequest request,User currentUser)
+    {
+        var place = await _placeRepo.GetWithAreaAsync(request.PlaceId);
+
+        if (place == null)
+            throw new InvalidOperationException("Place not found");
+
+        if (currentUser.Role != UserRole.GLOBAL_ADMIN)
+        {
+            var areaId = currentUser.ManagedAreas.Single().Id;
+
+            if (place.AreaId != areaId)
+                throw new UnauthorizedAccessException("Place not in your area");
+        }
+
+        var device = new Device
+        {
+            Type = request.Type,
+            PlaceId = place.Id,
+            AreaId = place.AreaId,
+            Latitude = place.Latitude,
+            Longitude = place.Longitude,
+            IsActive = false
+        };
+
+        await _deviceRepo.AddAsync(device);
+        await _deviceRepo.SaveAsync();
+
+        return await ToResponse(device.Id);
+    }
+
+
+
+    //Delete Device
+    public async Task DeleteAsync(
+        int deviceId,
+        User currentUser)
+    {
+        var device = await LoadDeviceWithAuth(deviceId, currentUser);
+
+        // disconnect target
+        if (device.TargetId != null)
+        {
+            var target = await _targetRepo.GetByIdAsync(device.TargetId.Value);
+
+            if (target != null)
+                target.DeviceId = null;
+        }
+
+        await _deviceRepo.RemoveAsync(device);
+        await _deviceRepo.SaveAsync();
+        await _targetRepo.SaveChangesAsync();
+    }
+
+
+    // Remove user from device
     public async Task RemoveUserAsync(
         int deviceId,
         Guid userId,
@@ -177,49 +272,35 @@ public class DeviceService : IDeviceService
     {
         _ = await LoadDeviceWithAuth(deviceId, currentUser);
 
-        var link = await _db.DeviceUsers
-            .FirstOrDefaultAsync(du =>
-                du.DeviceId == deviceId &&
-                du.UserId == userId);
+        var link = await _deviceUserRepo.GetAsync(deviceId, userId);
 
         if (link == null)
             return;
 
-        _db.DeviceUsers.Remove(link);
-        await _db.SaveChangesAsync();
+        _deviceUserRepo.Remove(link);
+        await _deviceUserRepo.SaveChangesAsync();
     }
 
 
-
-    private async Task<Device> LoadDeviceWithAuth(int deviceId, User currentUser)
+    // Get users for device
+    public async Task<List<User>> GetUsersForDeviceAsync(
+        int deviceId,
+        User currentUser)
     {
-        var device = await _db.Devices
-            .Include(d => d.Target)
-            .FirstOrDefaultAsync(d => d.Id == deviceId);
+        _ = await LoadDeviceWithAuth(deviceId, currentUser);
 
-        if (device == null)
-            throw new KeyNotFoundException("Device not found");
-
-        if (currentUser.Role != UserRole.GLOBAL_ADMIN)
-        {
-            var areaId = currentUser.ManagedAreas.Single().Id;
-            if (device.AreaId != areaId)
-                throw new UnauthorizedAccessException("Device not in your area");
-        }
-
-        return device;
+        return await _deviceUserRepo.GetUsersForDeviceAsync(deviceId);
     }
 
+
+    // build device response DTO
     private async Task<DeviceResponse> ToResponse(int deviceId)
     {
-        var d = await _db.Devices
-            .AsNoTracking()
-            .Include(x => x.Target)
-            .FirstAsync(x => x.Id == deviceId);
+        var d = await _deviceRepo.GetWithTargetAsync(deviceId);
 
         return new DeviceResponse
         {
-            Id = d.Id,
+            Id = d!.Id,
             Type = d.Type,
             PlaceId = d.PlaceId,
             AreaId = d.AreaId,
@@ -232,96 +313,21 @@ public class DeviceService : IDeviceService
         };
     }
 
-
-    private static double CalcAngle(double fromLat, double fromLon, double toLat, double toLon)
+    // calculate angle between device and target
+    private static double CalcAngle(
+        double fromLat,
+        double fromLon,
+        double toLat,
+        double toLon)
     {
         var dy = toLat - fromLat;
         var dx = toLon - fromLon;
         var radians = Math.Atan2(dy, dx);
         var degrees = radians * (180.0 / Math.PI);
-        if (degrees < 0) degrees += 360.0;
+
+        if (degrees < 0)
+            degrees += 360.0;
+
         return degrees;
     }
-
-    public async Task<List<User>> GetUsersForDeviceAsync(
-    int deviceId,
-    User currentUser)
-    {
-   
-        _ = await LoadDeviceWithAuth(deviceId, currentUser);
-
-        return await _db.DeviceUsers
-            .Where(du => du.DeviceId == deviceId)
-            .Include(du => du.User)
-            .Select(du => du.User)
-            .AsNoTracking()
-            .ToListAsync();
-    }
-
-
-
-    public async Task<DeviceResponse> CreateAsync(
-    CreateDeviceRequest request,
-    User currentUser)
-{
-    var place = await _db.Places
-        .Include(p => p.Area)
-        .FirstOrDefaultAsync(p => p.Id == request.PlaceId);
-
-    if (place == null)
-        throw new InvalidOperationException("Place not found");
-
-
-    if (currentUser.Role != UserRole.GLOBAL_ADMIN)
-    {
-        var areaId = currentUser.ManagedAreas.Single().Id;
-        if (place.AreaId != areaId)
-            throw new UnauthorizedAccessException("Place not in your area");
-    }
-
-    var device = new Device
-    {
-        Type = request.Type,
-        PlaceId = place.Id,
-        AreaId = place.AreaId,
-        Latitude = place.Latitude,
-        Longitude = place.Longitude,
-        IsActive = false
-    };
-
-    _db.Devices.Add(device);
-    await _db.SaveChangesAsync();
-
-    return await ToResponse(device.Id);
-}
-
-
-
-public async Task DeleteAsync(int deviceId, User currentUser)
-{
-    var device = await LoadDeviceWithAuth(deviceId, currentUser);
-
-    // ניתוק Target אם קיים
-    if (device.TargetId != null)
-    {
-        var target = await _db.Targets
-            .FirstOrDefaultAsync(t => t.Id == device.TargetId);
-
-        if (target != null)
-            target.DeviceId = null;
-    }
-
-    // ניתוק משתמשים
-    var links = await _db.DeviceUsers
-        .Where(du => du.DeviceId == deviceId)
-        .ToListAsync();
-
-    if (links.Count > 0)
-        _db.DeviceUsers.RemoveRange(links);
-
-    _db.Devices.Remove(device);
-    await _db.SaveChangesAsync();
-}
-
-
 }

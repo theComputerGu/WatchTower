@@ -1,10 +1,6 @@
 const API_URL = "http://localhost:5185/api/auth";
 
-export async function register(data: {
-  email: string;
-  password: string;
-  username: string;
-}) {
+export async function register(data: {email: string;password: string;username: string;}) {
   const res = await fetch(`${API_URL}/signup`, {
     method: "POST",
     headers: {
@@ -18,16 +14,14 @@ export async function register(data: {
     throw new Error(error);
   }
 
-  return res.json(); // { token, user }
+  //token
+  return res.json();
 }
 
 
 
 
-export async function login(data: {
-  email: string;
-  password: string;
-}) {
+export async function login(data: {email: string;password: string;}) {
   const res = await fetch("http://localhost:5185/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -39,6 +33,7 @@ export async function login(data: {
     throw new Error(error);
   }
 
-  return res.json(); // { token, user }
+  //token:
+  return res.json();
 }
 

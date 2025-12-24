@@ -1,45 +1,24 @@
 
 import type { Device } from "../../models/Device";
 import type { Target } from "../../models/Target";
-
-
 import DeviceViewersSelector from "./DeviceViewersSelector";
 import DeviceTargetSelector from "./DeviceTargetSelector";
 
 type Props = {
   device: Device;
   targets: Target[];
-
   onAssignTarget: (targetId: number) => void;
   onUnassignTarget: () => void;
-
   onChangeUsers: (userIds: string[]) => Promise<void>;
   onDelete: () => Promise<void>;
-  onBack?: () => void; // 👈 חדש
+  onBack?: () => void;
 };
 
-export default function DeviceDetailsPanel({
-  device,
-  targets,
-  onAssignTarget,
-  onUnassignTarget,
-  onDelete,
-  onBack, // 👈 זה מה שחסר
-}: Props) {
-
+export default function DeviceDetailsPanel({device,targets,onAssignTarget,onUnassignTarget,onDelete,onBack,}: Props) {
 
   return (
-
-    
     <div>
-      {onBack && (
-      <button
-        style={{ marginBottom: 12 }}
-        onClick={onBack}
-      >
-        ← Back
-      </button>
-    )}
+    
       <h4>Device #{device.id}</h4>
 
       <p>
@@ -64,9 +43,9 @@ export default function DeviceDetailsPanel({
 
       <hr />
 
-<h4>Viewers</h4>
+      <h4>Viewers</h4>
 
-<DeviceViewersSelector deviceId={device.id} />
+      <DeviceViewersSelector deviceId={device.id} />
 
       <hr />
 
@@ -84,6 +63,17 @@ export default function DeviceDetailsPanel({
       >
         🗑 Delete Device
       </button>
+
+<hr />
+      {onBack && (
+      <button
+        style={{ marginBottom: 12 }}
+        onClick={onBack}
+      >
+        ← Back
+      </button>
+    )}
+
     </div>
   );
 }

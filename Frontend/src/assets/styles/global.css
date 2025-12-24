@@ -21,14 +21,13 @@ body {
   color: var(--text-main);
 }
 
-/* ===== Layout ===== */
 
 .layout {
   display: flex;
   height: 100vh;
 }
 
-/* ===== Sidebar ===== */
+
 
 .sidebar {
   width: 240px;
@@ -57,13 +56,13 @@ body {
 }
 
 .sidebar__logo {
-  text-align: center;              /* ⬅️ מירכוז */
-  font-size: 20px;                 /* ⬅️ גדול וברור */
+  text-align: center;           
+  font-size: 20px;            
   font-weight: 700;
-  letter-spacing: 0.12em;          /* ⬅️ system feel */
+  letter-spacing: 0.12em;     
 
-  color: #a855f7;                  /* ⬅️ סגול כמו ה-avatar */
-  margin-bottom: 32px;             /* ⬅️ רווח מהתפריט */
+  color: #a855f7;                  
+  margin-bottom: 32px;          
 
   padding-bottom: 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -81,7 +80,7 @@ body {
   margin-bottom: 6px;
 }
 
-/* ===== Main ===== */
+
 
 .main {
   flex: 1;
@@ -90,11 +89,11 @@ body {
   height: 100%;
 }
 
-/* ===== TopBar ===== */
+
 
 .topbar {
-  height: 64px;                 /* ⬅️ הוגדל */
-  padding: 0 28px;              /* ⬅️ יותר אוויר */
+  height: 64px;               
+  padding: 0 28px;             
 
   display: flex;
   align-items: center;
@@ -109,21 +108,21 @@ body {
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* ===== User Chip ===== */
+
 
 .user-chip {
   display: flex;
   align-items: center;
-  gap: 14px;                    /* ⬅️ הוגדל */
+  gap: 14px;                 
 
-  padding: 8px 16px;            /* ⬅️ הוגדל */
+  padding: 8px 16px;           
   border-radius: 12px;
 
   background: rgba(255, 255, 255, 0.04);
 }
 
 .user-chip__avatar {
-  width: 38px;                  /* ⬅️ הוגדל */
+  width: 38px;              
   height: 38px;
   font-size: 16px;
 
@@ -153,35 +152,35 @@ body {
 }
 
 .user-chip__name {
-  font-size: 14px;              /* ⬅️ הוגדל */
+  font-size: 14px;          
   font-weight: 600;
   color: #e5e7eb;
 }
 
 .user-chip__role {
-  font-size: 12px;              /* ⬅️ הוגדל */
+  font-size: 12px;             
   font-weight: 500;
   opacity: 0.85;
 }
 
-/* ===== Role Colors ===== */
+
 
 .role-GLOBAL_ADMIN {
-  color: #facc15; /* gold */
+  color: #facc15; 
 }
 
 .role-AREA_ADMIN {
-  color: #38bdf8; /* blue */
+  color: #38bdf8; 
 }
 
 .role-USER {
-  color: #a1a1aa; /* gray */
+  color: #a1a1aa; 
 }
 
-/* ===== Page Content ===== */
+
 
 .page {
-  flex: 1;                    /* ⬅️ חדש */
+  flex: 1;              
   display: grid;
   grid-template-columns: 1fr 360px;
   gap: 16px;
@@ -214,7 +213,6 @@ body {
   margin-bottom: 16px;
 }
 
-/* ===== Forms ===== */
 
 label {
   font-size: 13px;
@@ -242,7 +240,7 @@ button.primary {
   font-weight: 600;
 }
 
-/* ===== Auth Pages ===== */
+
 
 .auth-page {
   position: relative;
@@ -343,11 +341,11 @@ button.primary {
 
 .actions-cell {
   display: flex;
-  justify-content: flex-end;   /* ⬅️ הצמדה לימין */
+  justify-content: flex-end;   
   align-items: center;
-  gap: 12px;                   /* ⬅️ רווח בין הכפתורים */
-  padding-right: 16px;         /* ⬅️ רווח מהקצה הימני */
-  white-space: nowrap;         /* ⬅️ שלא יישבר שורה */
+  gap: 12px;                  
+  padding-right: 16px;        
+  white-space: nowrap;      
 }
 
 td.actions-cell {

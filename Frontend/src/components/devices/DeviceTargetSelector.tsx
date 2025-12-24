@@ -7,10 +7,8 @@ interface Props {
   onClear: () => void;
 }
 
-export default function DeviceTargetSelector({
-  targets,
-  selectedTargetId,
-  onSelect,
+export default function DeviceTargetSelector({targets,selectedTargetId,
+onSelect,
   onClear,
 }: Props) {
   return (

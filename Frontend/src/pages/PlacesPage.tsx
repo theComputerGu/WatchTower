@@ -1,24 +1,21 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import type { RootState } from "../store";
-
 import { Marker } from "react-leaflet";
 import L from "leaflet";
-
 import MapView from "../components/map/MapView";
 import RightPanel from "../components/map/RightPanel";
 import PolygonLayer from "../components/map/PolygonLayer";
 import PlacesLayer from "../components/map/PlacesLayer";
-
 import { getAreas, getMyAreas } from "../services/area.service";
 import { getPlaces, createPlace, deletePlace } from "../services/place.service";
-
 import type { Area } from "../models/Area";
 import type { PlaceResponse } from "../types/place.types";
+import "./PlacesPage.css";
 
 type PendingPoint = { lat: number; lng: number } | null;
 
-/* 🔵 TEMP ICON */
+//icon that presenting:
 const pendingIcon = new L.Icon({
   iconUrl: "/place.svg",
   iconSize: [30, 30],
@@ -26,16 +23,23 @@ const pendingIcon = new L.Icon({
 });
 
 export default function PlacesPage() {
+
+  //conect to the auth redux:
   const user = useSelector((state: RootState) => state.auth.user);
 
   const [areas, setAreas] = useState<Area[]>([]);
   const [places, setPlaces] = useState<PlaceResponse[]>([]);
   const [loading, setLoading] = useState(true);
 
+  //if using adding:
   const [isPlacing, setIsPlacing] = useState(false);
+
+  //point that chosen in the map
   const [pendingPoint, setPendingPoint] = useState<PendingPoint>(null);
   const [submitting, setSubmitting] = useState(false);
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
+
+
 
   useEffect(() => {
     async function load() {
@@ -60,12 +64,16 @@ export default function PlacesPage() {
     load();
   }, [user]);
 
+
+  //if adding stores the point on the map:
   function handleMapClick(lat: number, lng: number) {
     if (!isPlacing) return;
     setPendingPoint({ lat, lng });
     setStatusMsg(null);
   }
 
+
+  //confirm adding place
   async function handleConfirmCreate() {
     if (!pendingPoint) return;
 
@@ -89,10 +97,16 @@ export default function PlacesPage() {
     }
   }
 
+
+
+  //deleting place:
   async function handleDeletePlace(placeId: number) {
     await deletePlace(placeId);
     setPlaces((prev) => prev.filter((p) => p.id !== placeId));
   }
+
+
+
 
   function handleCancel() {
     setPendingPoint(null);
@@ -100,14 +114,21 @@ export default function PlacesPage() {
     setStatusMsg(null);
   }
 
+
+
+
   if (loading) return <div>Loading...</div>;
 
+
+
+
   return (
-    <div className="page">
+    <div className="places-page">
+      <div className="places-map-wrapper">
       <MapView onMapClick={handleMapClick}>
         <PolygonLayer areas={areas} interactive={!isPlacing} />
 
-        {/* 🔵 TEMP PLACE MARKER */}
+        {/* create just if user chose a point on the map */}
         {pendingPoint && (
           <Marker
             position={[pendingPoint.lat, pendingPoint.lng]}
@@ -121,6 +142,7 @@ export default function PlacesPage() {
           onDelete={handleDeletePlace}
         />
       </MapView>
+      </div>
 
       <RightPanel title="Add Place">
         <button

@@ -2,6 +2,7 @@ import { MapContainer, TileLayer, FeatureGroup, GeoJSON } from "react-leaflet";
 import { EditControl } from "react-leaflet-draw";
 
 type Props = {
+  //the polygon now
   value?: string;
   onChange: (geoJson: string) => void;
   tall?: boolean;
@@ -15,6 +16,8 @@ export default function AreaMapPicker({ value, onChange, tall }: Props) {
     onChange(JSON.stringify(geoJson));
   }
 
+
+  //edit exis polygon:
   function handleEdited(e: any) {
     e.layers.eachLayer((layer: any) => {
       const geoJson = layer.toGeoJSON();
@@ -22,9 +25,13 @@ export default function AreaMapPicker({ value, onChange, tall }: Props) {
     });
   }
 
+
+  //delet epolygon
   function handleDeleted() {
     onChange("");
   }
+
+
 
   return (
     <MapContainer
@@ -43,6 +50,7 @@ export default function AreaMapPicker({ value, onChange, tall }: Props) {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
+        {/*everuthimg there can be edit + delete */}
       <FeatureGroup>
         <EditControl
           position="topright"

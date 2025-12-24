@@ -15,9 +15,9 @@ export interface Device {
   targetId?: number | null;
   targetName?: string | null;
 
-  // 👇 הוסף את זה
+
   targetLatitude?: number | null;
   targetLongitude?: number | null;
 
-    userIds?: string[]; // 👈 חשוב
+    userIds?: string[];
 }

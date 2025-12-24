@@ -1,6 +1,5 @@
 import { Marker, Popup, Polygon } from "react-leaflet";
 import L from "leaflet";
-
 import type { PlaceResponse } from "../../types/place.types";
 import { buildCone } from "../../utils/geo";
 
@@ -11,11 +10,10 @@ type Props = {
     placeId: number,
     type: "Camera" | "Radar"
   ) => void;
+  interactive?: boolean; 
 };
 
-// =======================
-// Icons
-// =======================
+
 
 const cameraIcon = new L.Icon({
   iconUrl: "/camera.svg",
@@ -41,20 +39,18 @@ function getPlaceIcon(deviceType?: "Camera" | "Radar" | null) {
   return emptyPointIcon;
 }
 
-export default function DevicesLayer({
-  places,
-  onSelectDevice,
-  onAddDevice,
+export default function DevicesLayer({places,onSelectDevice,onAddDevice,interactive = true, 
 }: Props) {
   return (
     <>
-      {/* ===== MARKERS ===== */}
+      {/* markers */}
       {places.map((place) => (
         <Marker
           key={place.id}
           position={[place.latitude, place.longitude]}
           icon={getPlaceIcon(place.deviceType)}
         >
+          {interactive && (
           <Popup>
             <strong>Place #{place.id}</strong>
 
@@ -99,10 +95,11 @@ export default function DevicesLayer({
               </button>
             )}
           </Popup>
+          )}
         </Marker>
       ))}
 
-      {/* ===== CONES ===== */}
+      {/* durection of the device*/}
       {places.map((place) => {
         if (
           !place.deviceId ||

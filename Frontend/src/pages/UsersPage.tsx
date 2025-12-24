@@ -1,4 +1,3 @@
-// src/pages/UsersPage.tsx
 import { useEffect, useState } from "react";
 import RightPanel from "../components/map/RightPanel";
 import type { User } from "../models/User";
@@ -8,16 +7,22 @@ import { getUnassignedAreas } from "../services/area.service";
 import { ROLES } from "../utils/roles";
 import type { Role } from "../utils/roles";
 
+
 export default function UsersPage() {
+
+
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [areas, setAreas] = useState<Area[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+
   useEffect(() => {
     loadUsers();
   }, []);
+
+
 
   async function loadUsers() {
     try {
@@ -29,10 +34,14 @@ export default function UsersPage() {
     }
   }
 
+
+
   async function loadAreas() {
     const data = await getUnassignedAreas();
     setAreas(data);
   }
+
+
 
   async function onSave() {
     if (!selectedUser) return;
@@ -59,13 +68,17 @@ export default function UsersPage() {
     }
   }
 
+
+
   if (loading) {
     return <div>Loading users…</div>;
   }
 
+
+
   return (
     <div className="page users-page">
-      {/* ===== Users Table ===== */}
+      {/* users table:*/}
       <div className="users-table">
         <div className="table-header">
           <span>Email</span>
@@ -74,6 +87,7 @@ export default function UsersPage() {
           <span>Area</span>
         </div>
 
+        {/*going on each user and shows:*/}
         {users.map((u) => (
           <div
             key={u.id}
@@ -95,7 +109,7 @@ export default function UsersPage() {
         ))}
       </div>
 
-      {/* ===== Right Panel ===== */}
+      {/* right panel:*/}
       <RightPanel title="Edit User">
         {!selectedUser && <p>Select a user to edit</p>}
 
@@ -104,7 +118,7 @@ export default function UsersPage() {
             <label>Email</label>
             <input value={selectedUser.email} disabled />
 
-            {/* ===== Role ===== */}
+            {/* role choosing:*/}
             <label>Role</label>
             <select
               value={selectedUser.role}
@@ -127,7 +141,7 @@ export default function UsersPage() {
               <option value={ROLES.AREA_ADMIN}>Area Admin</option>
             </select>
 
-            {/* ===== Area selector ===== */}
+            {/* area choosing: */}
             {selectedUser.role === ROLES.AREA_ADMIN && (
               <>
                 <label>Assigned Area</label>

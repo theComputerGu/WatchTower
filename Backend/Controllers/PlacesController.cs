@@ -30,6 +30,8 @@ public class PlacesController : ControllerBase
         return Ok(place);
     }
 
+
+
     //get all places
     [HttpGet]
     [Authorize(Roles = "GLOBAL_ADMIN,AREA_ADMIN")]
@@ -39,7 +41,6 @@ public class PlacesController : ControllerBase
         var user = HttpContext.Items["User"] as User;
         if (user == null)
         {
-            Console.WriteLine("❌ HttpContext.Items['User'] is null");
             return Unauthorized();
         }
 
@@ -48,6 +49,8 @@ public class PlacesController : ControllerBase
         return Ok(places);
     }
 
+
+    //update place type
     [HttpPatch("{id}/type")]
     [Authorize(Roles = "GLOBAL_ADMIN,AREA_ADMIN")]
     public async Task<IActionResult> UpdatePlaceType(int id,[FromBody] UpdatePlaceTypeRequest request)
@@ -61,6 +64,8 @@ public class PlacesController : ControllerBase
     }
 
 
+
+    //delete place
     [HttpDelete("{placeId}")]
     [Authorize(Roles = "GLOBAL_ADMIN,AREA_ADMIN")]
     public async Task<IActionResult> DeletePlace(int placeId)

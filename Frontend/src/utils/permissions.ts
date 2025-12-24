@@ -1,7 +1,7 @@
-// src/utils/permissions.ts
 import { ROLES } from "./roles";
 import type { Role } from "./roles";
 
+//premmision for each user in oreder to know what present:
 export const PERMISSIONS = {
   MAP: "MAP",
   PLACES: "PLACES",

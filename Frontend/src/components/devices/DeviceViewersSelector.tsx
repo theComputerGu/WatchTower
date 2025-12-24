@@ -2,11 +2,7 @@ import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../store";
 import type { User } from "../../models/User";
-import {
-  getDeviceUsers,
-  assignDeviceUsers,
-  removeDeviceUser,
-} from "../../services/device.service";
+import {getDeviceUsers,assignDeviceUsers,removeDeviceUser,} from "../../services/device.service";
 import { getUsers, getMyUsers } from "../../services/user.service";
 
 type Props = {
@@ -14,9 +10,7 @@ type Props = {
 };
 
 export default function DeviceViewersSelector({ deviceId }: Props) {
-  const currentUser = useSelector(
-    (state: RootState) => state.auth.user
-  );
+  const currentUser = useSelector((state: RootState) => state.auth.user);
 
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [viewers, setViewers] = useState<User[]>([]);

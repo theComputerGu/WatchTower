@@ -18,20 +18,13 @@ public class MapController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetMap(
-        [FromQuery] int? areaId,
-        [FromQuery] string? deviceType,
-        [FromQuery] string? status)
+    public async Task<IActionResult> GetMap([FromQuery] int? areaId,[FromQuery] string? deviceType,[FromQuery] string? status)
     {
         var user = HttpContext.Items["User"] as User;
         if (user == null)
             return Unauthorized();
 
-        var result = await _mapService.GetMapAsync(
-            user,
-            areaId,
-            deviceType,
-            status);
+        var result = await _mapService.GetMapAsync(user,areaId,deviceType,status);
 
         return Ok(result);
     }

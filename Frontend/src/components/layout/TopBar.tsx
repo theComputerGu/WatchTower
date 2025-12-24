@@ -10,7 +10,7 @@ export default function TopBar() {
 
   const handleLogout = () => {
     dispatch(logout());
-    navigate("/"); // Homepage
+    navigate("/");
   };
 
   return (
@@ -20,7 +20,7 @@ export default function TopBar() {
       <div className="topbar__right">
         {user && (
           <div className="user-chip">
-            {/* Avatar (Logout) */}
+            {/* Avatar Logout */}
             <div
               className="user-chip__avatar"
               onClick={handleLogout}

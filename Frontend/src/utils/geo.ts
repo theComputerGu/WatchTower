@@ -14,7 +14,7 @@ export function buildCone(
   origin: [number, number],
   target: [number, number],
   angle = 30,
-  distance = 200
+  distance = 10000
 ): LatLngExpression[] {
   const [lat1, lon1] = origin;
   const [lat2, lon2] = target;

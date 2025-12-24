@@ -18,6 +18,7 @@ public class TargetsController : ControllerBase
         _targetService = targetService;
     }
 
+    //get all the targets that  the user ca nsee - mabey nothing
     [HttpGet]
     public async Task<IActionResult> GetTargets([FromQuery] int? areaId = null)
     {
@@ -28,6 +29,8 @@ public class TargetsController : ControllerBase
         return Ok(targets);
     }
 
+
+    //create target
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateTargetRequest request)
     {
@@ -38,6 +41,8 @@ public class TargetsController : ControllerBase
         return Ok(created);
     }
 
+
+    //update the target - not usinf it now in the front
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateTargetRequest request)
     {
@@ -48,6 +53,8 @@ public class TargetsController : ControllerBase
         return Ok(updated);
     }
 
+
+    //delete target
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {

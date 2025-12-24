@@ -7,16 +7,23 @@ import { loginSuccess } from "../store/auth/authSlice";
 import AnimatedBackground from "../components/ui/AnimatedBackground";
 
 export default function RegisterPage() {
+
+  //connect to redux:
   const dispatch = useDispatch<AppDispatch>();
+
+  //navigate:
   const navigate = useNavigate();
 
+  //local useStates:
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
 
+  //function that handled signing up:
   async function handleSubmit() {
+
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
@@ -25,13 +32,18 @@ export default function RegisterPage() {
     try {
       const result = await register({ email, password, username });
 
+      //holds in the redux:
       dispatch(loginSuccess(result));
+
       navigate("/map");
     } catch (err: any) {
       setError(err.message);
     }
   }
 
+
+
+  
   return (
     <>
       <AnimatedBackground />

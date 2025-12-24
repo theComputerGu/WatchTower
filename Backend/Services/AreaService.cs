@@ -1,28 +1,23 @@
-using Backend.Data;
 using Backend.DTOs.Areas;
 using Backend.Models;
-using Backend.Models.Enums;
+using Backend.Repositories.Interfaces;
 using Backend.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Services
 {
     public class AreaService : IAreaService
     {
-        private readonly AppDbContext _context;
+        private readonly IAreaRepository _areaRepository;
 
-        public AreaService(AppDbContext context)
+        public AreaService(IAreaRepository areaRepository)
         {
-            _context = context;
+            _areaRepository = areaRepository;
         }
 
         //get all areas
         public async Task<List<AreaResponse>> GetAllAsync()
         {
-            var areas = await _context.Areas
-                .Include(a => a.AreaAdminUser)
-                .AsNoTracking()
-                .ToListAsync();
+            var areas = await _areaRepository.GetAllAsync();
 
             return areas.Select(a => new AreaResponse
             {
@@ -45,8 +40,7 @@ namespace Backend.Services
                 PolygonGeoJson = request.PolygonGeoJson
             };
 
-            _context.Areas.Add(area);
-            await _context.SaveChangesAsync();
+            await _areaRepository.AddAsync(area);
 
             return area.Id;
         }
@@ -54,7 +48,7 @@ namespace Backend.Services
         //edit area
         public async Task UpdateAsync(int areaId, CreateAreaRequest request)
         {
-            var area = await _context.Areas.FindAsync(areaId);
+            var area = await _areaRepository.GetByIdAsync(areaId);
             // if (area == null)
             //     throw new Exception("Area not found");
 
@@ -62,45 +56,34 @@ namespace Backend.Services
             area.Description = request.Description;
             area.PolygonGeoJson = request.PolygonGeoJson;
 
-            await _context.SaveChangesAsync();
+            await _areaRepository.SaveChangesAsync();
         }
 
         //delete area
         public async Task DeleteAsync(int areaId)
         {
-            var area = await _context.Areas.FindAsync(areaId);
+            var area = await _areaRepository.GetByIdAsync(areaId);
             // if (area == null)
             //     throw new Exception("Area not found");
 
-            _context.Areas.Remove(area);
-            await _context.SaveChangesAsync();
+            await _areaRepository.RemoveAsync(area);
         }
 
         //relate are to admin area
         public async Task AssignAdminAsync(int areaId, Guid userId)
         {
-            var area = await _context.Areas.FindAsync(areaId);
+            var area = await _areaRepository.GetByIdAsync(areaId);
             // if (area == null)
             //     throw new Exception("Area not found");
 
-            var user = await _context.Users.FindAsync(userId);
-            // if (user == null)
-            //     throw new Exception("User not found");
-
-            // if (user.Role != UserRole.AREA_ADMIN)
-            //     throw new Exception("User is not AREA_ADMIN");
-
-            area.AreaAdminUserId = user.Id;
-            await _context.SaveChangesAsync();
+            area.AreaAdminUserId = userId;
+            await _areaRepository.SaveChangesAsync();
         }
 
         //get areas that not relate to the current admin
         public async Task<List<AreaResponse>> GetUnassignedAsync()
         {
-            var areas = await _context.Areas
-                .Where(a => a.AreaAdminUserId == null)
-                .AsNoTracking()
-                .ToListAsync();
+            var areas = await _areaRepository.GetUnassignedAsync();
 
             return areas.Select(a => new AreaResponse
             {
@@ -112,6 +95,5 @@ namespace Backend.Services
                 AreaAdminName = null
             }).ToList();
         }
-
     }
 }

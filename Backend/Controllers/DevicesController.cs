@@ -19,6 +19,7 @@ public class DevicesController : ControllerBase
     }
 
     [HttpGet]
+    //get devices per user
     public async Task<IActionResult> GetDevices()
     {
         var user = HttpContext.Items["User"] as User;
@@ -28,6 +29,9 @@ public class DevicesController : ControllerBase
         return Ok(devices);
     }
 
+
+    //can update the type of the device
+    //now its not seen in the fronted
     [HttpPatch("{id}/type")]
     public async Task<IActionResult> UpdateType(int id, [FromBody] UpdateDeviceTypeRequest request)
     {
@@ -38,6 +42,7 @@ public class DevicesController : ControllerBase
         return Ok(updated);
     }
 
+    //relate target to device
     [HttpPost("{id}/target")]
     public async Task<IActionResult> AssignTarget(int id, [FromBody] AssignTargetRequest request)
     {
@@ -48,6 +53,7 @@ public class DevicesController : ControllerBase
         return Ok(updated);
     }
 
+    //Disconnect the harget from the device
     [HttpDelete("{id}/target")]
     public async Task<IActionResult> UnassignTarget(int id)
     {
@@ -58,10 +64,9 @@ public class DevicesController : ControllerBase
         return Ok(updated);
     }
 
+    //get array of users that want to be connect to the device
     [HttpPost("{id}/users")]
-    public async Task<IActionResult> AssignUsers(
-        int id,
-        [FromBody] AssignUsersRequest request)
+    public async Task<IActionResult> AssignUsers(int id,[FromBody] AssignUsersRequest request)
     {
         var user = HttpContext.Items["User"] as User;
         if (user == null) return Unauthorized();
@@ -70,10 +75,34 @@ public class DevicesController : ControllerBase
         return NoContent();
     }
 
+
+    //create device
+    [HttpPost]
+    public async Task<IActionResult> CreateDevice([FromBody] CreateDeviceRequest request)
+    {
+        var user = HttpContext.Items["User"] as User;
+        if (user == null) return Unauthorized();
+
+        var created = await _deviceService.CreateAsync(request, user);
+        return Ok(created);
+    }
+
+
+    //delete device
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteDevice(int id)
+    {
+        var user = HttpContext.Items["User"] as User;
+        if (user == null) return Unauthorized();
+
+        await _deviceService.DeleteAsync(id, user);
+        return NoContent();
+    }
+
+
+    //remove user that connect to device
     [HttpDelete("{id}/users/{userId}")]
-    public async Task<IActionResult> RemoveUser(
-        int id,
-        Guid userId)
+    public async Task<IActionResult> RemoveUser(int id,Guid userId)
     {
         var user = HttpContext.Items["User"] as User;
         if (user == null) return Unauthorized();
@@ -82,6 +111,9 @@ public class DevicesController : ControllerBase
         return NoContent();
     }
 
+
+    
+////////////////////////////////////////////////////////////////////////////////////////////
     [HttpGet("{id}/users")]
     public async Task<IActionResult> GetDeviceUsers(int id)
     {
@@ -99,29 +131,7 @@ public class DevicesController : ControllerBase
         }));
     }
 
-
-    [HttpPost]
-    public async Task<IActionResult> CreateDevice(
-        [FromBody] CreateDeviceRequest request)
-    {
-        var user = HttpContext.Items["User"] as User;
-        if (user == null) return Unauthorized();
-
-        var created = await _deviceService.CreateAsync(request, user);
-        return Ok(created);
-    }
-
-
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteDevice(int id)
-    {
-        var user = HttpContext.Items["User"] as User;
-        if (user == null) return Unauthorized();
-
-        await _deviceService.DeleteAsync(id, user);
-        return NoContent();
-    }
-
+////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
