@@ -2,7 +2,7 @@
 ### Map-Driven Surveillance Management System (Areas • Cameras • Radars • Targets • Users)
 
 <p align="center">
-  <img src="docs/screenshots/hero.png" width="900" />
+  <img src="Design/screenshots/third.png" width="900" />
   <br/>
   <i>One map to manage everything — areas, devices, targets, and access.</i>
 </p>
@@ -49,28 +49,28 @@ role-based authorization, spatial modeling, and a clean interactive UI.
 
 ### 🗺️ Main Map
 <p align="center">
-  <img src="Desighn/screenshots/מסך חמישי.png" width="900" />
+  <img src="Desighn/screenshots/five.png" width="900" />
   <br/>
   <i>Main interactive map — polygons, device markers and targets.</i>
 </p>
 
 ### 🧱 Area Management (Admin)
 <p align="center">
-  <img src="Desighn/screenshots/מסך ראשון.png" width="900" />
+  <img src="Desighn/screenshots/first.png" width="900" />
   <br/>
   <i>Create/edit/delete areas and draw polygons directly on the map.</i>
 </p>
 
 ### 📷 Devices (Cameras / Radars)
 <p align="center">
-  <img src="Desighn/screenshots/מסך רביעי.png" width="900" />
+  <img src="Desighn/screenshots/forth.png" width="900" />
   <br/>
   <i>Deploy devices, assign targets, and control active status.</i>
 </p>
 
 ### 👥 Users & Permissions
 <p align="center">
-  <img src="Desighn/screenshots/מסך שלישי.png" width="900" />
+  <img src="Desighn/screenshots/third.png" width="900" />
   <br/>
   <i>Assign roles and restrict visibility by user and by area.</i>
 </p>
