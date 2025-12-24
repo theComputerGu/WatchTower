@@ -1,8 +1,7 @@
 # 🛰️ WatchTower
-### Map-Driven Surveillance Management System (Areas • Cameras • Radars • Targets • Users)
 
 <p align="center">
-  <img src="Design/screenshots/third.png" width="900" />
+  <img src="Design/screenshots/home.png" width="900" />
   <br/>
   <i>One map to manage everything — areas, devices, targets, and access.</i>
 </p>
@@ -49,30 +48,37 @@ role-based authorization, spatial modeling, and a clean interactive UI.
 
 ### 🗺️ Main Map
 <p align="center">
-  <img src="Design/screenshots/five.png" width="900" />
+  <img src="Design/screenshots/main.png" width="900" />
   <br/>
   <i>Main interactive map — polygons, device markers and targets.</i>
 </p>
 
 ### 🧱 Area Management (Admin)
 <p align="center">
-  <img src="Design/screenshots/first.png" width="900" />
+  <img src="Design/screenshots/areas.png" width="900" />
   <br/>
   <i>Create/edit/delete areas and draw polygons directly on the map.</i>
 </p>
 
 ### 📷 Devices (Cameras / Radars)
 <p align="center">
-  <img src="Design/screenshots/forth.png" width="900" />
+  <img src="Design/screenshots/devices.png" width="900" />
   <br/>
   <i>Deploy devices, assign targets, and control active status.</i>
 </p>
 
 ### 👥 Users & Permissions
 <p align="center">
-  <img src="Design/screenshots/third.png" width="900" />
+  <img src="Design/screenshots/users.png" width="900" />
   <br/>
   <i>Assign roles and restrict visibility by user and by area.</i>
+</p>
+
+### 👥 Places
+<p align="center">
+  <img src="Design/screenshots/place.png" width="900" />
+  <br/>
+  <i>Create and manage place points within an area, serving as installation locations for cameras and radars.</i>
 </p>
 
 ---
