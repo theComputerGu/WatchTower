@@ -75,11 +75,6 @@ role-based authorization, spatial modeling, and a clean interactive UI.
   <i>Assign roles and restrict visibility by user and by area.</i>
 </p>
 
-> Tip: Add a short demo GIF:
-<p align="center">
-  <img src="Design/screenshots/מסך שני.gif" width="900" />
-</p>
-
 ---
 
 ## 👥 Roles & Permissions
