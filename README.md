@@ -120,15 +120,13 @@ Permissions are enforced in:
 
 ## 🧪 Run Locally
 
----
-
 ### Backend
 ```bash
 cd Backend
 dotnet restore
 dotnet ef database update
 dotnet run
-
+```
 
 ### 🎨 Frontend Setup
 
@@ -143,3 +141,4 @@ npm run dev
 
 
 The frontend will be available at:  http://localhost:5173
+```
