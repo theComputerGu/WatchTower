@@ -10,5 +10,6 @@ namespace Backend.Repositories.Interfaces
         Task AddPlaceAsync(Place place);
         Task RemovePlaceAsync(Place place);
         Task SaveChangesAsync();
+        Task<Place?> GetWithAreaAsync(int placeId);
     }
 }

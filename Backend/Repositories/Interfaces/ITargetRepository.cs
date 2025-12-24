@@ -15,4 +15,6 @@ public interface ITargetRepository
     void Remove(Target target);
 
     Task SaveChangesAsync();
+
+    Task<Target?> GetWithDeviceAsync(int targetId);
 }

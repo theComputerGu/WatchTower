@@ -66,6 +66,7 @@ builder.Services.AddScoped<IAreaRepository, AreaRepository>();
 builder.Services.AddScoped<IPlaceRepository, PlaceRepository>();
 builder.Services.AddScoped<ITargetRepository, TargetRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IDeviceUserRepository, DeviceUserRepository>();
 
 //conection to front:
 builder.Services.AddCors(options =>

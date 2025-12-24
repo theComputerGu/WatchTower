@@ -43,4 +43,11 @@ public class TargetRepository : ITargetRepository
     {
         await _db.SaveChangesAsync();
     }
+
+    public async Task<Target?> GetWithDeviceAsync(int targetId)
+    {
+        return await _db.Targets
+            .Include(t => t.Device)
+            .FirstOrDefaultAsync(t => t.Id == targetId);
+    }
 }

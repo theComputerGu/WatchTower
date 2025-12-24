@@ -53,5 +53,13 @@ namespace Backend.Repositories
         {
             await _db.SaveChangesAsync();
         }
+
+        public async Task<Place?> GetWithAreaAsync(int placeId)
+        {
+            return await _db.Places
+                .Include(p => p.Area)
+                .FirstOrDefaultAsync(p => p.Id == placeId);
+        }
+
     }
 }

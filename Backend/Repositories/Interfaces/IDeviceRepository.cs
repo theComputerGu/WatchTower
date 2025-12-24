@@ -3,10 +3,11 @@ namespace Backend.Repositories.Interfaces;
 
 public interface IDeviceRepository
 {
-    Task<Device?> GetByIdAsync(int id);
-    Task<Device?> GetByIdWithTargetAsync(int id);
     Task<List<Device>> GetByAreaAsync(int areaId);
+    Task<List<Device>> GetAllWithTargetsAsync();
+    Task<Device?> GetWithTargetAsync(int deviceId);
     Task AddAsync(Device device);
     Task RemoveAsync(Device device);
     Task SaveAsync();
+    Task<Device?> GetByIdAsync(int deviceId);
 }

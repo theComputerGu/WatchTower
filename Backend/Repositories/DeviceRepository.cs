@@ -35,4 +35,21 @@ public class DeviceRepository : IDeviceRepository
 
     public async Task SaveAsync()
         => await _db.SaveChangesAsync();
+
+
+    public async Task<List<Device>> GetAllWithTargetsAsync()
+    {
+        return await _db.Devices
+            .Include(d => d.Target)
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
+    public async Task<Device?> GetWithTargetAsync(int deviceId)
+    {
+        return await _db.Devices
+            .Include(d => d.Target)
+            .FirstOrDefaultAsync(d => d.Id == deviceId);
+    }
+
 }

@@ -3,35 +3,48 @@ using Backend.Models;
 using Backend.Models.Enums;
 using Backend.Repositories.Interfaces;
 using Backend.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
-using Backend.Data;
+
 namespace Backend.Services;
 
 public class DeviceService : IDeviceService
 {
-    private readonly IDeviceRepository _deviceRepository;
-    private readonly AppDbContext _db;
+    private readonly IDeviceRepository _deviceRepo;
+    private readonly ITargetRepository _targetRepo;
+    private readonly IPlaceRepository _placeRepo;
+    private readonly IUserRepository _userRepo;
+    private readonly IDeviceUserRepository _deviceUserRepo;
 
-    public DeviceService(IDeviceRepository deviceRepository,AppDbContext db)
+    public DeviceService(
+        IDeviceRepository deviceRepo,
+        ITargetRepository targetRepo,
+        IPlaceRepository placeRepo,
+        IUserRepository userRepo,
+        IDeviceUserRepository deviceUserRepo)
     {
-        _deviceRepository = deviceRepository;
-        _db = db;
+        _deviceRepo = deviceRepo;
+        _targetRepo = targetRepo;
+        _placeRepo = placeRepo;
+        _userRepo = userRepo;
+        _deviceUserRepo = deviceUserRepo;
     }
 
 
     // get the devices that relate to the current user
     public async Task<List<DeviceResponse>> GetDevicesForUserAsync(User currentUser)
     {
-        IQueryable<Device> query = _db.Devices.AsNoTracking().Include(d => d.Target);
+        List<Device> devices;
 
-        // non-global admin can see devices only in his managed area
-        if (currentUser.Role != UserRole.GLOBAL_ADMIN)
+        if (currentUser.Role == UserRole.GLOBAL_ADMIN)
+        {
+            devices = await _deviceRepo.GetAllWithTargetsAsync();
+        }
+        else
         {
             var areaId = currentUser.ManagedAreas.Single().Id;
-            query = query.Where(d => d.AreaId == areaId);
+            devices = await _deviceRepo.GetByAreaAsync(areaId);
         }
 
-        return await query.Select(d => new DeviceResponse
+        return devices.Select(d => new DeviceResponse
         {
             Id = d.Id,
             Type = d.Type,
@@ -43,7 +56,7 @@ public class DeviceService : IDeviceService
             OrientationAngle = d.OrientationAngle,
             TargetId = d.TargetId,
             TargetName = d.Target != null ? d.Target.Name : null
-        }).ToListAsync();
+        }).ToList();
     }
 
 
@@ -53,7 +66,7 @@ public class DeviceService : IDeviceService
         var device = await LoadDeviceWithAuth(deviceId, currentUser);
 
         device.Type = newType;
-        await _deviceRepository.SaveAsync();
+        await _deviceRepo.SaveAsync();
 
         return await ToResponse(device.Id);
     }
@@ -64,7 +77,7 @@ public class DeviceService : IDeviceService
         int deviceId,
         User currentUser)
     {
-        var device = await _deviceRepository.GetByIdWithTargetAsync(deviceId);
+        var device = await _deviceRepo.GetWithTargetAsync(deviceId);
 
         if (device == null)
             throw new KeyNotFoundException("Device not found");
@@ -85,11 +98,9 @@ public class DeviceService : IDeviceService
     // Assign target to device
     public async Task<DeviceResponse> AssignTargetAsync(int deviceId,int targetId,User currentUser)
     {
-        await using var tx = await _db.Database.BeginTransactionAsync();
-
         var device = await LoadDeviceWithAuth(deviceId, currentUser);
 
-        var target = await _db.Targets.Include(t => t.Device).FirstOrDefaultAsync(t => t.Id == targetId);
+        var target = await _targetRepo.GetWithDeviceAsync(targetId);
 
         if (target == null)
             throw new KeyNotFoundException("Target not found");
@@ -113,8 +124,7 @@ public class DeviceService : IDeviceService
         // disconnect old target from device (safety, even if FE does not allow it)
         if (device.TargetId != null && device.TargetId != target.Id)
         {
-            var oldTarget = await _db.Targets
-                .FirstOrDefaultAsync(t => t.Id == device.TargetId.Value);
+            var oldTarget = await _targetRepo.GetByIdAsync(device.TargetId.Value);
 
             if (oldTarget != null)
                 oldTarget.DeviceId = null;
@@ -135,8 +145,8 @@ public class DeviceService : IDeviceService
             target.Latitude,
             target.Longitude);
 
-        await _deviceRepository.SaveAsync();
-        await tx.CommitAsync();
+        await _deviceRepo.SaveAsync();
+        await _targetRepo.SaveChangesAsync();
 
         return await ToResponse(device.Id);
     }
@@ -145,14 +155,11 @@ public class DeviceService : IDeviceService
     // Disconnect target from device
     public async Task<DeviceResponse> UnassignTargetAsync(int deviceId,User currentUser)
     {
-        await using var tx = await _db.Database.BeginTransactionAsync();
-
         var device = await LoadDeviceWithAuth(deviceId, currentUser);
 
         if (device.TargetId != null)
         {
-            var target = await _db.Targets
-                .FirstOrDefaultAsync(t => t.Id == device.TargetId.Value);
+            var target = await _targetRepo.GetByIdAsync(device.TargetId.Value);
 
             if (target != null)
                 target.DeviceId = null;
@@ -163,8 +170,8 @@ public class DeviceService : IDeviceService
         device.IsActive = false;
         device.OrientationAngle = null;
 
-        await _deviceRepository.SaveAsync();
-        await tx.CommitAsync();
+        await _deviceRepo.SaveAsync();
+        await _targetRepo.SaveChangesAsync();
 
         return await ToResponse(device.Id);
     }
@@ -176,20 +183,15 @@ public class DeviceService : IDeviceService
     {
         _ = await LoadDeviceWithAuth(deviceId, currentUser);
 
-        var users = await _db.Users
-            .Where(u => userIds.Contains(u.Id))
-            .ToListAsync();
+        var users = await Task.WhenAll(
+            userIds.Select(id => _userRepo.GetByIdAsync(id)));
 
-        if (users.Count != userIds.Count)
+        if (users.Any(u => u == null))
             throw new InvalidOperationException("One or more users not found");
 
-        // existing users already connected to device
-        var existingUserIds = await _db.DeviceUsers
-            .Where(du => du.DeviceId == deviceId)
-            .Select(du => du.UserId)
-            .ToListAsync();
+        var existingUserIds = await _deviceUserRepo
+            .GetUserIdsForDeviceAsync(deviceId);
 
-        // users to add
         var toAdd = userIds
             .Where(uid => !existingUserIds.Contains(uid))
             .Select(uid => new DeviceUser
@@ -200,18 +202,16 @@ public class DeviceService : IDeviceService
             .ToList();
 
         if (toAdd.Count > 0)
-            _db.DeviceUsers.AddRange(toAdd);
+            await _deviceUserRepo.AddRangeAsync(toAdd);
 
-        await _deviceRepository.SaveAsync();
+        await _deviceUserRepo.SaveChangesAsync();
     }
 
 
     //Create Device
     public async Task<DeviceResponse> CreateAsync(CreateDeviceRequest request,User currentUser)
     {
-        var place = await _db.Places
-            .Include(p => p.Area)
-            .FirstOrDefaultAsync(p => p.Id == request.PlaceId);
+        var place = await _placeRepo.GetWithAreaAsync(request.PlaceId);
 
         if (place == null)
             throw new InvalidOperationException("Place not found");
@@ -234,8 +234,8 @@ public class DeviceService : IDeviceService
             IsActive = false
         };
 
-        await _deviceRepository.AddAsync(device);
-        await _deviceRepository.SaveAsync();
+        await _deviceRepo.AddAsync(device);
+        await _deviceRepo.SaveAsync();
 
         return await ToResponse(device.Id);
     }
@@ -252,23 +252,15 @@ public class DeviceService : IDeviceService
         // disconnect target
         if (device.TargetId != null)
         {
-            var target = await _db.Targets
-                .FirstOrDefaultAsync(t => t.Id == device.TargetId);
+            var target = await _targetRepo.GetByIdAsync(device.TargetId.Value);
 
             if (target != null)
                 target.DeviceId = null;
         }
 
-        // disconnect users
-        var links = await _db.DeviceUsers
-            .Where(du => du.DeviceId == deviceId)
-            .ToListAsync();
-
-        if (links.Count > 0)
-            _db.DeviceUsers.RemoveRange(links);
-
-        await _deviceRepository.RemoveAsync(device);
-        await _deviceRepository.SaveAsync();
+        await _deviceRepo.RemoveAsync(device);
+        await _deviceRepo.SaveAsync();
+        await _targetRepo.SaveChangesAsync();
     }
 
 
@@ -280,16 +272,13 @@ public class DeviceService : IDeviceService
     {
         _ = await LoadDeviceWithAuth(deviceId, currentUser);
 
-        var link = await _db.DeviceUsers
-            .FirstOrDefaultAsync(du =>
-                du.DeviceId == deviceId &&
-                du.UserId == userId);
+        var link = await _deviceUserRepo.GetAsync(deviceId, userId);
 
         if (link == null)
             return;
 
-        _db.DeviceUsers.Remove(link);
-        await _deviceRepository.SaveAsync();
+        _deviceUserRepo.Remove(link);
+        await _deviceUserRepo.SaveChangesAsync();
     }
 
 
@@ -300,26 +289,18 @@ public class DeviceService : IDeviceService
     {
         _ = await LoadDeviceWithAuth(deviceId, currentUser);
 
-        return await _db.DeviceUsers
-            .Where(du => du.DeviceId == deviceId)
-            .Include(du => du.User)
-            .Select(du => du.User)
-            .AsNoTracking()
-            .ToListAsync();
+        return await _deviceUserRepo.GetUsersForDeviceAsync(deviceId);
     }
 
 
     // build device response DTO
     private async Task<DeviceResponse> ToResponse(int deviceId)
     {
-        var d = await _db.Devices
-            .AsNoTracking()
-            .Include(d => d.Target)
-            .FirstAsync(d => d.Id == deviceId);
+        var d = await _deviceRepo.GetWithTargetAsync(deviceId);
 
         return new DeviceResponse
         {
-            Id = d.Id,
+            Id = d!.Id,
             Type = d.Type,
             PlaceId = d.PlaceId,
             AreaId = d.AreaId,
