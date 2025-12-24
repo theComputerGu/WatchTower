@@ -126,3 +126,18 @@ cd Backend
 dotnet restore
 dotnet ef database update
 dotnet run
+
+
+### 🎨 Frontend Setup
+
+#### 📦 Install Dependencies
+
+```bash
+cd Frontend
+npm install
+
+▶️ Run Development Server
+npm run dev
+
+
+The frontend will be available at:  http://localhost:5173
