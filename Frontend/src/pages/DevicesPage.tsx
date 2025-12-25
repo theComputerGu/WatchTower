@@ -7,7 +7,7 @@ import AreasLayer from "../components/map/AreasLayer";
 import TargetsLayer from "../components/map/TargetsLayer";
 import DeviceDetailsPanel from "../components/devices/DeviceDetailsPanel";
 import {getDevices,assignTarget,unassignTarget,assignUsersToDevice,createDevice,deleteDevice,} from "../services/device.service";
-import {getTargets,createTarget,deleteTarget,} from "../services/target.service";
+import {getTargets,createTarget,deleteTarget,updateTargetPosition,updateTargetDetails,} from "../services/target.service";
 import { getAreas } from "../services/area.service";
 import { getPlaces } from "../services/place.service";
 import type { Device } from "../models/Device";
@@ -20,7 +20,7 @@ import "./DevicesPage.css";
 
 type PendingPoint = { lat: number; lng: number } | null;
 
-type RightPanelMode = "DEFAULT" | "CREATE_TARGET" | "DEVICE_DETAILS";
+type RightPanelMode = "DEFAULT" | "CREATE_TARGET" | "DEVICE_DETAILS" | "EDIT_TARGET";
 
 export default function DevicesPage() {
 
@@ -35,6 +35,11 @@ export default function DevicesPage() {
   const [isPlacingTarget, setIsPlacingTarget] =useState(false);
   const [pendingPoint, setPendingPoint] =useState<PendingPoint>(null);
   const [targetName, setTargetName] = useState("");
+
+  const [editingTarget, setEditingTarget] =useState<Target | null>(null);
+  const [isEditingTargetPosition, setIsEditingTargetPosition] =useState(false);
+  const [editTargetName, setEditTargetName] = useState("");
+  const [editTargetDescription, setEditTargetDescription] =useState("");
 
 
 
@@ -313,6 +318,56 @@ const selectedPlace = useMemo(() => {
 
 
 
+//handles edit target:
+function handleEditTarget(target: Target) {
+  setEditingTarget(target);
+  setEditTargetName(target.name);
+  setEditTargetDescription(target.description || "");
+  setRightPanelMode("EDIT_TARGET");
+}
+
+
+
+//handles edit target:
+async function handleMoveTarget(targetId: number,lat: number,lng: number) {
+  setTargets((prev) =>
+    prev.map((t) =>
+      t.id === targetId
+        ? { ...t, latitude: lat, longitude: lng }
+        : t
+    )
+  );
+
+  await updateTargetPosition(targetId, lat, lng);
+}
+
+
+
+
+//handle description + name
+async function handleSaveTargetDetails() {
+  if (!editingTarget) return;
+
+  const updated = await updateTargetDetails(
+    editingTarget.id,
+    {
+      name: editTargetName,
+      description: editTargetDescription,
+    }
+  );
+
+  setTargets((prev) =>
+    prev.map((t) =>
+      t.id === updated.id ? updated : t
+    )
+  );
+
+  setEditingTarget(null);
+  setIsEditingTargetPosition(false);
+  setRightPanelMode("DEFAULT");
+}
+
+
 
   if (loading) return <div>Loading...</div>;
 
@@ -342,6 +397,8 @@ const selectedPlace = useMemo(() => {
             onSelectTarget={handleAssignTarget}
             onDeleteTarget={handleDeleteTarget}
             pendingPoint={isPlacingTarget ? pendingPoint : null}
+            editingTargetId={isEditingTargetPosition ? editingTarget?.id : null}
+            onMoveTarget={handleMoveTarget}
           />
 
           {fixedCone && (
@@ -401,6 +458,57 @@ const selectedPlace = useMemo(() => {
             onBack={() => setRightPanelMode("DEFAULT")}
           />
           )}
+        {rightPanelMode === "EDIT_TARGET" && editingTarget && (
+  <section className="panel-section">
+    <h4>Edit Target</h4>
+
+    <label>Name</label>
+    <input
+      value={editTargetName}
+      onChange={(e) =>
+        setEditTargetName(e.target.value)
+      }
+    />
+
+    <label>Description</label>
+    <textarea
+      value={editTargetDescription}
+      onChange={(e) =>
+        setEditTargetDescription(e.target.value)
+      }
+    />
+
+    <button
+      onClick={() =>
+        setIsEditingTargetPosition((v) => !v)
+      }
+    >
+      📍{" "}
+      {isEditingTargetPosition
+        ? "Finish Move"
+        : "Edit Position"}
+    </button>
+
+    <div style={{ display: "flex", gap: 8 }}>
+      <button
+        className="primary"
+        onClick={handleSaveTargetDetails}
+      >
+        💾 Save
+      </button>
+
+      <button
+        onClick={() => {
+          setEditingTarget(null);
+          setIsEditingTargetPosition(false);
+          setRightPanelMode("DEFAULT");
+        }}
+      >
+        Cancel
+      </button>
+    </div>
+  </section>
+)}
 
         {rightPanelMode === "DEFAULT" && (
           <section className="panel-section">
@@ -417,13 +525,27 @@ const selectedPlace = useMemo(() => {
             </button>
 
             <ul>
-              {availableTargets.map((t) => (
-                <li key={t.id}>
-                  {t.name}
+              {targets.map((t) => (
+                <li
+                  key={t.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  <span style={{ flex: 1 }}>{t.name}</span>
+
                   <button
-                    onClick={() =>
-                      handleDeleteTarget(t.id)
-                    }
+                    onClick={() => handleEditTarget(t)}
+                    title="Edit Target"
+                  >
+                    ✏️
+                  </button>
+
+                  <button
+                    onClick={() => handleDeleteTarget(t.id)}
+                    title="Delete Target"
                   >
                     🗑
                   </button>

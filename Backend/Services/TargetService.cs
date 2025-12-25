@@ -100,7 +100,7 @@ public class TargetService : ITargetService
     }
 
     //update the target - not usinf it now in the front
-    public async Task<TargetResponse> UpdateAsync(int targetId, UpdateTargetRequest request, User currentUser)
+    public async Task<TargetResponse> UpdateDetailsAsync(int targetId, UpdateTargetRequest request, User currentUser)
     {
         var target = await _targetBase.GetByIdAsync(targetId);
         if (target == null) throw new KeyNotFoundException("Target not found");
@@ -131,6 +131,34 @@ public class TargetService : ITargetService
             DeviceId = target.DeviceId
         };
     }
+
+
+
+    //target position
+    public async Task UpdatePositionAsync(int targetId,double latitude,double longitude,User currentUser)
+    {
+        var target = await _targetBase.GetByIdAsync(targetId);
+        if (target == null)
+            throw new KeyNotFoundException("Target not found");
+
+        if (currentUser.Role == UserRole.USER)
+            throw new UnauthorizedAccessException();
+
+        if (currentUser.Role == UserRole.AREA_ADMIN)
+        {
+            var myAreaIds = currentUser.ManagedAreas.Select(a => a.Id);
+            if (!myAreaIds.Contains(target.AreaId))
+                throw new UnauthorizedAccessException();
+        }
+
+        target.Latitude = latitude;
+        target.Longitude = longitude;
+
+        await _targetBase.SaveChangesAsync();
+    }
+
+
+
 
 
     //delete target

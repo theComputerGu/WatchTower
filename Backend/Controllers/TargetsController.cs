@@ -42,16 +42,30 @@ public class TargetsController : ControllerBase
     }
 
 
-    //update the target - not usinf it now in the front
-    [HttpPut("{id}")]
+    //update the target
+    [HttpPatch("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateTargetRequest request)
     {
         var user = HttpContext.Items["User"] as User;
         if (user == null) return Unauthorized();
 
-        var updated = await _targetService.UpdateAsync(id, request, user);
+        var updated = await _targetService.UpdateDetailsAsync(id, request, user);
         return Ok(updated);
     }
+
+    //target postion for updates:
+    [HttpPatch("{id}/position")]
+    [Authorize(Roles = "GLOBAL_ADMIN,AREA_ADMIN")]
+    public async Task<IActionResult> UpdatePosition(int id,[FromBody] UpdateTargetPositionRequest request)
+    {
+        var user = HttpContext.Items["User"] as User;
+        if (user == null) return Unauthorized();
+
+        await _targetService.UpdatePositionAsync(id,request.Latitude,request.Longitude,user);
+
+        return NoContent();
+    }
+
 
 
     //delete target
