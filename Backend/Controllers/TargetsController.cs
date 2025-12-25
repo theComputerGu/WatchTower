@@ -61,9 +61,16 @@ public class TargetsController : ControllerBase
         var user = HttpContext.Items["User"] as User;
         if (user == null) return Unauthorized();
 
-        await _targetService.UpdatePositionAsync(id,request.Latitude,request.Longitude,user);
+        try
+        {
+            await _targetService.UpdatePositionAsync(id, request.Latitude, request.Longitude, user);
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
 
-        return NoContent();
     }
 
 

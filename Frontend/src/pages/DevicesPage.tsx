@@ -16,7 +16,7 @@ import type { Area } from "../models/Area";
 import type { PlaceResponse } from "../types/place.types";
 import { buildCone } from "../utils/geo";
 import "./DevicesPage.css";
-
+import { useRef } from "react";
 
 type PendingPoint = { lat: number; lng: number } | null;
 
@@ -40,6 +40,10 @@ export default function DevicesPage() {
   const [isEditingTargetPosition, setIsEditingTargetPosition] =useState(false);
   const [editTargetName, setEditTargetName] = useState("");
   const [editTargetDescription, setEditTargetDescription] =useState("");
+
+  const prevTargetPositions = useRef<Record<number, { lat: number; lng: number }>>({});
+
+  const [statusMsg, setStatusMsg] = useState<string | null>(null);
 
 
 
@@ -221,30 +225,27 @@ export default function DevicesPage() {
 
 
 
-  async function handleCreateTarget() {
-   if (!pendingPoint) {
-    console.warn("No pending point");
-    return;
-  }
-  const { lat, lng } = pendingPoint;
+ async function handleCreateTarget() {
+  if (!pendingPoint) return;
 
-  const areaId = areas[0]?.id;
+  try {
+    const created = await createTarget({
+      name: targetName || "New Target",
+      latitude: pendingPoint.lat,
+      longitude: pendingPoint.lng,
+      areaId: areas[0].id,
+    });
 
-  if (!areaId) {
-    alert("No area available");
-    return;
+    setTargets((prev) => [...prev, created]);
+    setStatusMsg("✅ Target created");
+
+    setIsPlacingTarget(false);
+    setPendingPoint(null);
+    setTargetName("");
+    setRightPanelMode("DEFAULT");
+  } catch {
+    setStatusMsg("❌ Cannot create target in this area");
   }
-  const created = await createTarget({
-    name: targetName || "New Target",
-    latitude: lat,
-    longitude: lng,
-    areaId,
-  });
-  setTargets((prev) => [...prev, created]);
-  setIsPlacingTarget(false);
-  setPendingPoint(null);
-  setTargetName("");
-  setRightPanelMode("DEFAULT");
 }
 
 
@@ -323,23 +324,64 @@ function handleEditTarget(target: Target) {
   setEditingTarget(target);
   setEditTargetName(target.name);
   setEditTargetDescription(target.description || "");
+  prevTargetPositions.current[target.id] = {
+  lat: target.latitude,
+  lng: target.longitude,
+  };
   setRightPanelMode("EDIT_TARGET");
 }
 
 
 
 //handles edit target:
-async function handleMoveTarget(targetId: number,lat: number,lng: number) {
-  setTargets((prev) =>
-    prev.map((t) =>
-      t.id === targetId
-        ? { ...t, latitude: lat, longitude: lng }
-        : t
-    )
-  );
+async function handleMoveTarget(
+  targetId: number,
+  lat: number,
+  lng: number
+) {
+  const current = targets.find(t => t.id === targetId);
+  if (!current) return;
 
-  await updateTargetPosition(targetId, lat, lng);
+  prevTargetPositions.current[targetId] = {
+    lat: current.latitude,
+    lng: current.longitude,
+  };
+
+  try {
+    await updateTargetPosition(targetId, lat, lng);
+
+    setTargets((prev) =>
+      prev.map((t) =>
+        t.id === targetId
+          ? { ...t, latitude: lat, longitude: lng }
+          : t
+      )
+    );
+
+    setStatusMsg("✅ Target moved");
+    setIsEditingTargetPosition(false);
+  } catch (err) {
+    const prevPos = prevTargetPositions.current[targetId];
+
+    if (prevPos) {
+      setTargets((prevList) =>
+        prevList.map((t) =>
+          t.id === targetId
+            ? {
+                ...t,
+                latitude: prevPos.lat,
+                longitude: prevPos.lng,
+              }
+            : t
+        )
+      );
+    }
+
+    setStatusMsg("❌ You cannot move target to this area");
+    setIsEditingTargetPosition(false);
+  }
 }
+
 
 
 
@@ -348,23 +390,29 @@ async function handleMoveTarget(targetId: number,lat: number,lng: number) {
 async function handleSaveTargetDetails() {
   if (!editingTarget) return;
 
-  const updated = await updateTargetDetails(
-    editingTarget.id,
-    {
-      name: editTargetName,
-      description: editTargetDescription,
-    }
-  );
+  try {
+    const updated = await updateTargetDetails(
+      editingTarget.id,
+      {
+        name: editTargetName,
+        description: editTargetDescription,
+      }
+    );
 
-  setTargets((prev) =>
-    prev.map((t) =>
-      t.id === updated.id ? updated : t
-    )
-  );
+    setTargets((prev) =>
+      prev.map((t) =>
+        t.id === updated.id ? updated : t
+      )
+    );
 
-  setEditingTarget(null);
-  setIsEditingTargetPosition(false);
-  setRightPanelMode("DEFAULT");
+    setStatusMsg("✅ Target saved");
+
+    setEditingTarget(null);
+    setIsEditingTargetPosition(false);
+    setRightPanelMode("DEFAULT");
+  } catch (err) {
+    setStatusMsg("❌ Failed to save target");
+  }
 }
 
 
@@ -459,56 +507,56 @@ async function handleSaveTargetDetails() {
           />
           )}
         {rightPanelMode === "EDIT_TARGET" && editingTarget && (
-  <section className="panel-section">
-    <h4>Edit Target</h4>
+          <section className="panel-section">
+            <h4>Edit Target</h4>
 
-    <label>Name</label>
-    <input
-      value={editTargetName}
-      onChange={(e) =>
-        setEditTargetName(e.target.value)
-      }
-    />
+            <label>Name</label>
+            <input
+              value={editTargetName}
+              onChange={(e) =>
+                setEditTargetName(e.target.value)
+              }
+            />
 
-    <label>Description</label>
-    <textarea
-      value={editTargetDescription}
-      onChange={(e) =>
-        setEditTargetDescription(e.target.value)
-      }
-    />
+            <label>Description</label>
+            <textarea
+              value={editTargetDescription}
+              onChange={(e) =>
+                setEditTargetDescription(e.target.value)
+              }
+            />
 
-    <button
-      onClick={() =>
-        setIsEditingTargetPosition((v) => !v)
-      }
-    >
-      📍{" "}
-      {isEditingTargetPosition
-        ? "Finish Move"
-        : "Edit Position"}
-    </button>
+            <button
+              onClick={() =>
+                setIsEditingTargetPosition((v) => !v)
+              }
+            >
+              📍{" "}
+              {isEditingTargetPosition
+                ? "Finish Move"
+                : "Edit Position"}
+            </button>
 
-    <div style={{ display: "flex", gap: 8 }}>
-      <button
-        className="primary"
-        onClick={handleSaveTargetDetails}
-      >
-        💾 Save
-      </button>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                className="primary"
+                onClick={handleSaveTargetDetails}
+              >
+                💾 Save
+              </button>
 
-      <button
-        onClick={() => {
-          setEditingTarget(null);
-          setIsEditingTargetPosition(false);
-          setRightPanelMode("DEFAULT");
-        }}
-      >
-        Cancel
-      </button>
-    </div>
-  </section>
-)}
+              <button
+                onClick={() => {
+                  setEditingTarget(null);
+                  setIsEditingTargetPosition(false);
+                  setRightPanelMode("DEFAULT");
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </section>
+        )}
 
         {rightPanelMode === "DEFAULT" && (
           <section className="panel-section">
@@ -554,6 +602,19 @@ async function handleSaveTargetDetails() {
             </ul>
           </section>
         )}
+        {statusMsg && (
+  <div
+    style={{
+      marginTop: 12,
+      padding: "8px 10px",
+      borderRadius: 8,
+      background: "#1e293b",
+      color: "white",
+      fontSize: 13,
+    }}
+  >
+    {statusMsg}
+  </div>)}
       </RightPanel>
     </div>
   );
