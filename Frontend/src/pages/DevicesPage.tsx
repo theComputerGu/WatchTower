@@ -17,6 +17,7 @@ import type { PlaceResponse } from "../types/place.types";
 import { buildCone } from "../utils/geo";
 import "./DevicesPage.css";
 import { useRef } from "react";
+import { updateDeviceType } from "../services/device.service";
 
 type PendingPoint = { lat: number; lng: number } | null;
 
@@ -71,6 +72,30 @@ export default function DevicesPage() {
 
     load();
   }, []);
+
+
+
+  //update the device type:
+  async function handleSwitchDeviceType(deviceId: number,newType: "Camera" | "Radar") {
+  const updated = await updateDeviceType(deviceId, newType);
+
+  setDevices((prev) =>
+    prev.map((d) =>
+      d.id === updated.id ? updated : d
+    )
+  );
+
+  setPlaces((prev) =>
+    prev.map((p) =>
+      p.deviceId === updated.id
+        ? { ...p, deviceType: updated.type }
+        : p
+    )
+  );
+
+  setSelectedDevice(updated);
+}
+
 
 
 
@@ -436,6 +461,7 @@ async function handleSaveTargetDetails() {
             places={places}
             onSelectDevice={handleSelectDevice}
             onAddDevice={handleAddDevice}
+            onSwitchDeviceType={handleSwitchDeviceType}
             interactive
           />
 

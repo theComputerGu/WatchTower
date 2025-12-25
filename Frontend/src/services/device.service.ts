@@ -107,3 +107,15 @@ export async function assignDeviceUsers(
     userIds,
   });
 }
+
+
+export async function updateDeviceType(
+  deviceId: number,
+  type: "Camera" | "Radar"
+): Promise<Device> {
+  const res = await api.patch<Device>(
+    `/devices/${deviceId}/type`,
+    { type }
+  );
+  return res.data;
+}

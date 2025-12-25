@@ -71,11 +71,17 @@ public class DeviceService : IDeviceService
     {
         var device = await LoadDeviceWithAuth(deviceId, currentUser);
 
+    
+        if (device.Type == newType)
+            return await ToResponse(device.Id);
+
         device.Type = newType;
+
         await _deviceBase.SaveChangesAsync();
 
         return await ToResponse(device.Id);
     }
+
 
 
     // load the device and verify authorization
