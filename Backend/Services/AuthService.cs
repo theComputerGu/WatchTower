@@ -59,10 +59,10 @@ public class AuthService : IAuthService
         var user = await _users.GetByEmailAsync(request.Email);
 
         if (user == null)
-            throw new ArgumentException("Invalid credentials");
+            throw new UnauthorizedAccessException("Invalid email or password");
 
         if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
-            throw new ArgumentException("Invalid credentials");
+            throw new UnauthorizedAccessException("Invalid email or password");
 
         var token = _jwt.CreateToken(user);
 

@@ -26,11 +26,11 @@ public class UserContextMiddleware
         var userId = context.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
 
         //cheking if there is user
-        if (userId == null)
-        {
-            await _next(context);
-            return;
-        }
+        if (string.IsNullOrWhiteSpace(userId))
+    {
+        await _next(context);
+        return;
+    }
 
         //loading all the parameters of the user + the areas that relate to the user
         var user = await db.Users.Include(u => u.ManagedAreas).FirstOrDefaultAsync(u => u.Id.ToString() == userId);

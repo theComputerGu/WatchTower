@@ -29,9 +29,16 @@ export async function login(data: {email: string;password: string;}) {
   });
 
   if (!res.ok) {
-    const error = await res.text();
-    throw new Error(error);
+  let message = "Login failed";
+
+  if (res.status === 401) {
+    message = "Invalid email or password";
+  } else if (res.status === 400) {
+    message = "Invalid request";
   }
+
+  throw new Error(message);
+}
 
   //token:
   return res.json();

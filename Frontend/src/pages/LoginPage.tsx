@@ -31,8 +31,8 @@ export default function LoginPage() {
       
       navigate("/map");
     } catch (err: any) {
-      setError(err.message);
-    }
+  setError(err?.message || "Login failed");
+  }
   }
 
 
