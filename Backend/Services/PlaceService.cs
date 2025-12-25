@@ -6,7 +6,7 @@ using Backend.Services.Interfaces;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.IO;
 using Newtonsoft.Json.Linq;
-
+using Microsoft.EntityFrameworkCore;
 namespace Backend.Services;
 
 public class PlaceService : IPlaceService
@@ -15,18 +15,21 @@ public class PlaceService : IPlaceService
     private readonly IBaseRepository<Place> _placeBase;
     private readonly IDeviceRepository _deviceRepository;
     private readonly IBaseRepository<Device> _deviceBase;
+    private readonly IBaseRepository<Area> _areaBase;
 
 
     public PlaceService(
         IPlaceRepository placeRepository,
         IBaseRepository<Place> placeBase,
         IDeviceRepository deviceRepository,
-        IBaseRepository<Device> deviceBase)
+        IBaseRepository<Device> deviceBase,
+         IBaseRepository<Area> areaBase)
     {
         _placeRepository = placeRepository;
         _placeBase = placeBase;
         _deviceRepository = deviceRepository;
         _deviceBase = deviceBase;
+        _areaBase = areaBase;
     }
 
     //create place
@@ -132,15 +135,17 @@ public class PlaceService : IPlaceService
 
 
     //update place position
-    public async Task UpdatePlacePositionAsync(int placeId,double latitude,double longitude,User currentUser)
+    public async Task UpdatePlacePositionAsync(
+    int placeId,
+    double latitude,
+    double longitude,
+    User currentUser)
     {
-        
         var place = await _placeRepository.GetPlaceWithDeviceAsync(placeId);
 
         if (place == null)
             throw new KeyNotFoundException("Place not found");
 
-        
         if (currentUser.Role == UserRole.AREA_ADMIN)
         {
             var managedAreaIds = currentUser.ManagedAreas.Select(a => a.Id);
@@ -148,11 +153,32 @@ public class PlaceService : IPlaceService
                 throw new UnauthorizedAccessException();
         }
 
-    
+        List<Area> allowedAreas;
+
+        if (currentUser.Role == UserRole.GLOBAL_ADMIN)
+        {
+            allowedAreas = await _areaBase
+                .Query()
+                .Where(a => !string.IsNullOrWhiteSpace(a.PolygonGeoJson))
+                .ToListAsync();
+        }
+        else
+        {
+            allowedAreas = currentUser.ManagedAreas
+                .Where(a => !string.IsNullOrWhiteSpace(a.PolygonGeoJson))
+                .ToList();
+        }
+
+        var isInsideAllowedPolygon = allowedAreas.Any(area =>
+            IsPointInsidePolygon(latitude, longitude, area.PolygonGeoJson));
+
+        if (!isInsideAllowedPolygon)
+            throw new InvalidOperationException(
+                "Place must be inside allowed area polygon");
+
         place.Latitude = latitude;
         place.Longitude = longitude;
 
-      
         if (place.Device != null)
         {
             place.Device.Latitude = latitude;
