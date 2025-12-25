@@ -16,6 +16,7 @@ public class PlaceService : IPlaceService
     private readonly IDeviceRepository _deviceRepository;
     private readonly IBaseRepository<Device> _deviceBase;
 
+
     public PlaceService(
         IPlaceRepository placeRepository,
         IBaseRepository<Place> placeBase,
@@ -129,49 +130,102 @@ public class PlaceService : IPlaceService
         }).ToList();
     }
 
-    //Update place type - not using it in the front
-    public async Task UpdatePlaceTypeAsync(int placeId,PlaceType newType,User currentUser)
+
+    //update place position
+    public async Task UpdatePlacePositionAsync(int placeId,double latitude,double longitude,User currentUser)
     {
+        
         var place = await _placeRepository.GetPlaceWithDeviceAsync(placeId);
 
         if (place == null)
             throw new KeyNotFoundException("Place not found");
 
-        if (currentUser.Role != UserRole.GLOBAL_ADMIN)
+        
+        if (currentUser.Role == UserRole.AREA_ADMIN)
         {
-            var areaId = currentUser.ManagedAreas.Single().Id;
-            if (place.AreaId != areaId)
+            var managedAreaIds = currentUser.ManagedAreas.Select(a => a.Id);
+            if (!managedAreaIds.Contains(place.AreaId))
                 throw new UnauthorizedAccessException();
         }
 
-        // if the device exist removing
+    
+        place.Latitude = latitude;
+        place.Longitude = longitude;
+
+      
+        if (place.Device != null)
+        {
+            place.Device.Latitude = latitude;
+            place.Device.Longitude = longitude;
+        }
+
+        await _placeBase.SaveChangesAsync();
+    }
+
+
+
+
+
+    //Update place type - not using it in the front
+    public async Task UpdatePlaceDeviceAsync(int placeId,PlaceType newType,User currentUser)
+    {
+      
+        var place = await _placeRepository.GetPlaceWithDeviceAsync(placeId);
+
+        if (place == null)
+            throw new KeyNotFoundException("Place not found");
+
+ 
+        if (currentUser.Role == UserRole.AREA_ADMIN)
+        {
+            var managedAreaIds = currentUser.ManagedAreas.Select(a => a.Id);
+            if (!managedAreaIds.Contains(place.AreaId))
+                throw new UnauthorizedAccessException();
+        }
+
+   
+        Target? existingTarget = place.Device?.Target;
+        bool wasActive = place.Device?.IsActive ?? false;
+
+   
         if (place.Device != null)
         {
             _deviceBase.Remove(place.Device);
+            await _deviceBase.SaveChangesAsync();
         }
 
-        if (newType != PlaceType.None)
+   
+        if (newType == PlaceType.None)
+            return;
+
+      
+        var deviceType =
+            newType == PlaceType.Camera
+                ? DeviceType.Camera
+                : DeviceType.Radar;
+
+        var newDevice = new Device
         {
-            var deviceType =
-                newType == PlaceType.Camera
-                    ? DeviceType.Camera
-                    : DeviceType.Radar;
+            Type = deviceType,
+            PlaceId = place.Id,
+            AreaId = place.AreaId,
+            Latitude = place.Latitude,
+            Longitude = place.Longitude,
+            IsActive = wasActive
+        };
 
-            var device = new Device
-            {
-                Type = deviceType,
-                PlaceId = place.Id,
-                AreaId = place.AreaId,
-                Latitude = place.Latitude,
-                Longitude = place.Longitude,
-                IsActive = false
-            };
-
-            await _deviceBase.AddAsync(device);
-        }
-
+        await _deviceBase.AddAsync(newDevice);
         await _deviceBase.SaveChangesAsync();
+
+     
+        if (existingTarget != null)
+        {
+            existingTarget.DeviceId = newDevice.Id;
+            await _deviceBase.SaveChangesAsync();
+        }
     }
+
+
 
     //delete place
     public async Task DeletePlaceAsync(int placeId,User currentUser)

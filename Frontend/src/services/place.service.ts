@@ -24,3 +24,15 @@ export async function updatePlaceType(
 export async function deletePlace(placeId: number): Promise<void> {
   await api.delete(`/places/${placeId}`);
 }
+
+
+export async function updatePlacePosition(
+  placeId: number,
+  latitude: number,
+  longitude: number
+): Promise<void> {
+  await api.patch(`/places/${placeId}/position`, {
+    latitude,
+    longitude,
+  });
+}

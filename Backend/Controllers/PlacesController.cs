@@ -49,16 +49,34 @@ public class PlacesController : ControllerBase
         return Ok(places);
     }
 
-
-    //update place type
-    [HttpPatch("{id}/type")]
+    //update postion
+    [HttpPatch("{id}/position")]
     [Authorize(Roles = "GLOBAL_ADMIN,AREA_ADMIN")]
-    public async Task<IActionResult> UpdatePlaceType(int id,[FromBody] UpdatePlaceTypeRequest request)
+    public async Task<IActionResult> UpdatePlacePosition(
+        int id,
+        [FromBody] UpdatePlacePositionRequest request)
     {
         var user = HttpContext.Items["User"] as User;
         if (user == null) return Unauthorized();
 
-        await _placeService.UpdatePlaceTypeAsync(id,request.Type,user);
+        await _placeService.UpdatePlacePositionAsync(
+            id,
+            request.Latitude,
+            request.Longitude,
+            user);
+
+        return NoContent();
+    }
+
+    //update place type
+    [HttpPatch("{id}/device")]
+    [Authorize(Roles = "GLOBAL_ADMIN,AREA_ADMIN")]
+    public async Task<IActionResult> UpdatePlaceDevice(int id,[FromBody] UpdatePlaceTypeRequest request)
+    {
+        var user = HttpContext.Items["User"] as User;
+        if (user == null) return Unauthorized();
+
+        await _placeService.UpdatePlaceDeviceAsync(id,request.Type,user);
 
         return NoContent();
     }
