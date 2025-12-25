@@ -13,17 +13,21 @@ public class TargetService : ITargetService
     private readonly IBaseRepository<Target> _targetBase;
     private readonly IDeviceRepository _devices;
     private readonly IBaseRepository<Device> _deviceBase;
+    private readonly IAreaRepository _areaRepository;
 
     public TargetService(
         ITargetRepository targets,
         IBaseRepository<Target> targetBase,
         IDeviceRepository devices,
-        IBaseRepository<Device> deviceBase)
+        IBaseRepository<Device> deviceBase,
+        IAreaRepository areaRepository)
+        
     {
         _targets = targets;
         _targetBase = targetBase;
         _devices = devices;
         _deviceBase = deviceBase;
+        _areaRepository = areaRepository;
     }
 
     //get all the targets that  the user ca nsee - mabey nothing
@@ -59,21 +63,31 @@ public class TargetService : ITargetService
 
 
     //create target
-    public async Task<TargetResponse> CreateAsync(CreateTargetRequest request, User currentUser)
+    public async Task<TargetResponse> CreateAsync(
+    CreateTargetRequest request,
+    User currentUser)
     {
         if (currentUser.Role == UserRole.USER)
             throw new UnauthorizedAccessException("User cannot create targets");
 
+ 
+        var area = await _areaRepository.FindAreaContainingPointAsync(
+            request.Latitude,
+            request.Longitude
+        );
+
+        if (area == null)
+            throw new InvalidOperationException("Target must be inside an area");
+
+   
         if (currentUser.Role == UserRole.AREA_ADMIN)
         {
-            var myAreaIds = currentUser.ManagedAreas.Select(a => a.Id).ToList();
-            if (!myAreaIds.Contains(request.AreaId))
-                throw new UnauthorizedAccessException("Cannot create target outside your area");
+            var myAreaIds = currentUser.ManagedAreas.Select(a => a.Id);
+            if (!myAreaIds.Contains(area.Id))
+                throw new UnauthorizedAccessException(
+                    "Cannot create target outside your area"
+                );
         }
-
-        var areaExists = await _targets.AreaExistsAsync(request.AreaId);
-        if (!areaExists)
-            throw new InvalidOperationException("Area not found");
 
         var target = new Target
         {
@@ -81,7 +95,7 @@ public class TargetService : ITargetService
             Description = request.Description,
             Latitude = request.Latitude,
             Longitude = request.Longitude,
-            AreaId = request.AreaId
+            AreaId = area.Id 
         };
 
         await _targetBase.AddAsync(target);
@@ -99,8 +113,9 @@ public class TargetService : ITargetService
         };
     }
 
+
     //update the target - not usinf it now in the front
-    public async Task<TargetResponse> UpdateAsync(int targetId, UpdateTargetRequest request, User currentUser)
+    public async Task<TargetResponse> UpdateDetailsAsync(int targetId, UpdateTargetRequest request, User currentUser)
     {
         var target = await _targetBase.GetByIdAsync(targetId);
         if (target == null) throw new KeyNotFoundException("Target not found");
@@ -131,6 +146,51 @@ public class TargetService : ITargetService
             DeviceId = target.DeviceId
         };
     }
+
+
+
+    //target position
+    public async Task UpdatePositionAsync(
+    int targetId,
+    double latitude,
+    double longitude,
+    User currentUser)
+    {
+        var target = await _targetBase.GetByIdAsync(targetId);
+        if (target == null)
+            throw new KeyNotFoundException("Target not found");
+
+        if (currentUser.Role == UserRole.USER)
+            throw new UnauthorizedAccessException();
+
+     
+        var newArea = await _areaRepository
+            .FindAreaContainingPointAsync(latitude, longitude);
+
+        if (newArea == null)
+            throw new InvalidOperationException(
+                "Target must be inside an area");
+
+ 
+        if (currentUser.Role == UserRole.AREA_ADMIN)
+        {
+            var myAreaIds = currentUser.ManagedAreas
+                .Select(a => a.Id);
+
+            if (!myAreaIds.Contains(newArea.Id))
+                throw new UnauthorizedAccessException(
+                    "Cannot move target outside your area");
+        }
+
+        target.Latitude = latitude;
+        target.Longitude = longitude;
+        target.AreaId = newArea.Id;
+
+        await _targetBase.SaveChangesAsync();
+    }
+
+
+
 
 
     //delete target

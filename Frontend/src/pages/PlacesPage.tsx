@@ -12,6 +12,7 @@ import { getPlaces, createPlace, deletePlace } from "../services/place.service";
 import type { Area } from "../models/Area";
 import type { PlaceResponse } from "../types/place.types";
 import "./PlacesPage.css";
+import { updatePlacePosition } from "../services/place.service";
 
 type PendingPoint = { lat: number; lng: number } | null;
 
@@ -116,6 +117,28 @@ export default function PlacesPage() {
 
 
 
+  //handles edit place:
+  async function handleMovePlace(placeId: number,lat: number,lng: number) {
+  setPlaces((prev) =>
+    prev.map((p) =>
+      p.id === placeId
+        ? { ...p, latitude: lat, longitude: lng }
+        : p
+    )
+  );
+
+  try {
+    await updatePlacePosition(placeId, lat, lng);
+  } catch {
+  
+    const refreshed = await getPlaces();
+    setPlaces(refreshed);
+  }
+}
+
+
+
+
 
   if (loading) return <div>Loading...</div>;
 
@@ -140,6 +163,7 @@ export default function PlacesPage() {
         <PlacesLayer
           places={places}
           onDelete={handleDeletePlace}
+          onMove={handleMovePlace}
         />
       </MapView>
       </div>

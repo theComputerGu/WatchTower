@@ -10,6 +10,10 @@ type Props = {
     placeId: number,
     type: "Camera" | "Radar"
   ) => void;
+  onSwitchDeviceType: (
+    deviceId: number,
+    newType: "Camera" | "Radar"
+  ) => void;
   interactive?: boolean; 
 };
 
@@ -39,7 +43,7 @@ function getPlaceIcon(deviceType?: "Camera" | "Radar" | null) {
   return emptyPointIcon;
 }
 
-export default function DevicesLayer({places,onSelectDevice,onAddDevice,interactive = true, 
+export default function DevicesLayer({places,onSelectDevice,onAddDevice,onSwitchDeviceType,interactive = true, 
 }: Props) {
   return (
     <>
@@ -94,6 +98,23 @@ export default function DevicesLayer({places,onSelectDevice,onAddDevice,interact
                 ⚙️ Open Device
               </button>
             )}
+            <button
+              style={{ marginTop: 6, width: "100%" }}
+              onClick={() =>
+                onSwitchDeviceType(
+                  place.deviceId!,
+                  place.deviceType === "Camera"
+                    ? "Radar"
+                    : "Camera"
+                )
+              }
+            >
+              🔄 Switch to{" "}
+              {place.deviceType === "Camera"
+                ? "Radar"
+                : "Camera"}
+            </button>
+
           </Popup>
           )}
         </Marker>

@@ -15,7 +15,7 @@ public interface IPlaceService
         User currentUser
     );
 
-    Task UpdatePlaceTypeAsync(
+    Task UpdatePlaceDeviceAsync(
     int placeId,
     PlaceType newType,
     User currentUser
@@ -26,5 +26,11 @@ public interface IPlaceService
         int placeId,
         User currentUser
     );
+
+    Task UpdatePlacePositionAsync(
+    int placeId,
+    double latitude,
+    double longitude,
+    User currentUser);
 
 }

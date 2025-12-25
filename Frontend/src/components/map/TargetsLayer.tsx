@@ -10,6 +10,8 @@ type Props = {
   onSelectTarget?: (targetId: number) => void;
   onDeleteTarget?: (targetId: number) => void;
   pendingPoint?: PendingPoint;
+  editingTargetId?: number | null;
+  onMoveTarget?: (id: number, lat: number, lng: number) => void;
 };
 
 
@@ -45,6 +47,8 @@ export default function TargetsLayer({
   selectedTargetId,
   onSelectTarget,
   pendingPoint,
+  editingTargetId,
+  onMoveTarget,
 }: Props) {
   return (
     <>
@@ -52,6 +56,8 @@ export default function TargetsLayer({
       {targets.map((target) => {
         const isSelected = target.id === selectedTargetId;
         const isLocked = !!target.deviceId && !isSelected;
+        const isEditing = editingTargetId === target.id;
+        
 
         return (
           <Marker
@@ -64,13 +70,20 @@ export default function TargetsLayer({
                 ? lockedTargetIcon
                 : targetIcon
             }
+            draggable={isEditing}
             eventHandlers={{
-  dblclick: () => {
-    if (onSelectTarget && !isLocked) {
-      onSelectTarget(target.id);
-    }
-  },
-}}
+              dblclick: () => {
+                if (onSelectTarget && !isLocked) {
+                  onSelectTarget(target.id);
+                }
+              },
+              dragend: (e) => {
+                if (!isEditing || !onMoveTarget) return;
+
+                const { lat, lng } = e.target.getLatLng();
+                onMoveTarget(target.id, lat, lng);
+              },
+            }}
           >
             <Popup>
               <div
